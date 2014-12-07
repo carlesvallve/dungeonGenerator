@@ -1,39 +1,36 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class CameraOrbit : MonoBehaviour {
-
-	//public CameraFade scriptFade;
+public class CameraControls : MonoBehaviour {
 
 	public Transform target;
-	public Vector3 center = new Vector3(0, 0.35f, 0);
-	public Vector3 angle = new Vector3(45, 45, 0);
-	public float distance = 10;
-
-	public float distanceMin = 1;
-	public float distanceMax = 20;
-
-	public float yMin = -20;
-	public float yMax = 89;
-
-	public float xSpeed = 25;
-	public float ySpeed = 50;
-	public float zSpeed = 15;
-
-	public float x = 0;
-	public float y = 0;
-
+	
+	
 	public float interval = 5.0f; // bigger numbers increase interpolation speed
 
 	// input controls
 	public bool mouseControlsEnabled = false;
 	public bool touchControlsEnabled = false;
-	private bool rotating = false;
+	
 
-	#if !UNITY_EDITOR
-		private float pinchLength = 0f;
-		private float deltaLength = 0f;
-	#endif
+	// pan
+	private bool panning = false;
+	public float panSpeed = 0.2f;
+	public Vector3 center = new Vector3(0, 0.35f, 0);
+
+	// rotate
+	private bool rotating = false;
+	public Vector3 angle = new Vector3(45, 45, 0);
+	public Vector2 rotationSpeed = new Vector3(50, 25, 0);
+	public float xAngleMin = -20;
+	public float xAngleMax = 89;
+
+
+	// zoom
+	public float distance = 10;
+	public float distanceMin = 1;
+	public float distanceMax = 20;
+	public float zoomSpeed = 15;
 
 
 	void Start () {
@@ -42,78 +39,37 @@ public class CameraOrbit : MonoBehaviour {
 			print("No camera target selected!");
 			return;
 		}
-
-		//angle increments
-		x = angle.y;
-		y = angle.x;
-
-		// camera fade-in
-		/*scriptFade = gameObject.GetComponent<CameraFade>();
-		if(!scriptFade) {
-			print("CameraFade script is required in order to fade the scene!");
-			return;
-		}
-		//StartCoroutine(FadeIn(Color.white, 1.5f, 1.0f));*/
-	}
-
-
-	/*public IEnumerator FadeIn (Color color, float time, float delay) {
-		scriptFade.SetScreenOverlayColor(color);
-		yield return new WaitForSeconds(delay);
-		scriptFade.StartFade(new Color(0, 0, 0, 0), time);
-	}
-	
-
-	public IEnumerator FadeOut (Color color, float time, float delay) {
-		yield return new WaitForSeconds(delay);
-		scriptFade.StartFade(color, time);
-	}*/
-
-
-	public void setTarget (Transform target) {
-		if (!target) target = new GameObject().transform;
-		this.target = target;
-	}
-
-
-	void setDistance (float mouseZ) {
-		distance = Mathf.Clamp(distance - mouseZ * zSpeed, distanceMin, distanceMax);
-	}
-
-
-	void setRotation (float mouseX, float mouseY) {
-		x += mouseX * xSpeed;
-		y -= mouseY * ySpeed;
-		y = ClampAngle(y, yMin, yMax);
-		//interval = 100;
-
-		// update angle prop for debug purposes
-		angle.x = y;
-		angle.y = x;
 	}
 
 
 	void Update () {
-		if (!target) return;
-		
-		// manage interactive control input
 		setInputControls();
+	}
+
+
+	void LateUpdate () {
+		if (!target) return;
 
 		//get new pos and rot from increments
-		Quaternion rotation = Quaternion.Euler(y, x, 0);
-		Vector3 position = rotation *
-			new Vector3(0.0f, 0.0f, -distance) +
-			target.position + center;
+		// transform.RotateAround(Vector3.zero, Vector3.up, 20 * Time.deltaTime);
+		Quaternion rotation = Quaternion.Euler(angle.x, angle.y, 0);
+		
+		//Vector3 c = rotating ? center : getDelta3d(center);
+		Vector3 position =  rotation * new Vector3(0.0f, 0.0f, -distance) + target.position + getDelta3d(center);
+
+
+		//position = getDelta3d(position);
 
 		//interpolate camera to new pos and rotation
-		float interval = this.interval;
-		if (rotating) interval = 25;
+		float interval = 0;//this.interval;
+		//if (rotating) interval = 25;
 
 		if (interval != 0) {
 			float time = Time.deltaTime;
-			//transform.position = Vector3.MoveTowards(transform.position, position, time * interval);
+
 			transform.position = Vector3.Slerp(transform.position, position, time * interval);
 			transform.rotation = Quaternion.Slerp (transform.rotation, rotation, time * interval);
+
 		} else {
 			transform.position = position;
 			transform.rotation = rotation;
@@ -121,7 +77,36 @@ public class CameraOrbit : MonoBehaviour {
 	}
 
 
-	private float ClampAngle(float angle , float min , float max ) {
+	void setInputControls () {
+		// middle button to pan
+		if (Input.GetMouseButtonDown(2)) panning = true;
+		if (Input.GetMouseButtonUp(2)) panning = false;
+		if (panning) {
+			center.x -= Input.GetAxis("Mouse X") * panSpeed;
+			center.z -= Input.GetAxis("Mouse Y") * panSpeed;
+			//center = getDelta3d(center);
+		}
+
+		// right button to rotate
+		if (Input.GetMouseButtonDown(1)) rotating = true;
+		if (Input.GetMouseButtonUp(1)) rotating = false;
+		if (rotating) {
+			angle.y += Input.GetAxis("Mouse X") * rotationSpeed.y;
+			angle.x -= Input.GetAxis("Mouse Y") * rotationSpeed.x;
+			angle.x = ClampAngle(angle.x, xAngleMin, xAngleMax);
+		}
+
+		// mouse wheel to zoom
+		setDistance(Input.GetAxis("Mouse ScrollWheel"));
+	}
+
+
+	void setDistance (float mouseZ) {
+		distance = Mathf.Clamp(distance - mouseZ * zoomSpeed, distanceMin, distanceMax);
+	}
+
+
+	float ClampAngle(float angle , float min , float max ) {
 		if (angle < -360)
 			angle += 360;
 		if (angle > 360)
@@ -130,7 +115,18 @@ public class CameraOrbit : MonoBehaviour {
 	}
 
 
-	private void setInputControls () {
+	public Vector3 getDelta3d(Vector3 pos) {
+		Vector3 cameraRelativeVector = Camera.main.transform.TransformDirection(pos.x, pos.z, pos.z);
+		cameraRelativeVector.y = pos.y;
+		return cameraRelativeVector;
+	}
+
+
+	//**********************************
+	// Controls for device
+	// *********************************
+
+	/*private void setInputControls () {
 
 		#if UNITY_EDITOR
 			if (!mouseControlsEnabled) return;
@@ -194,7 +190,7 @@ public class CameraOrbit : MonoBehaviour {
 				rotating = false;
 			}
 		#endif
-	}
+	}*/
 
 }
 
