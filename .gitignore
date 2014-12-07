@@ -1,0 +1,39 @@
+.swp
+*.swp
+*.session
+.idea
+.DS_Store
+._.DS_Store
+.htpasswd
+.pidfile
+*.log
+*.sock
+npm-debug.log
+
+# =============== #
+# Unity generated #
+# =============== #
+Temp/
+Library/
+
+# ===================================== #
+# Visual Studio / MonoDevelop generated #
+# ===================================== #
+ExportedObj/
+obj/
+*.svd
+*.userprefs
+*.csproj
+*.pidb
+*.suo
+*.sln
+*.user
+*.unityproj
+*.booproj
+
+# ====================== #
+# Sublime Text generated #
+# ====================== #
+# *.sublime-project
+# *.sublime-workspace
+
