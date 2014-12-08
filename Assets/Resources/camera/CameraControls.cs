@@ -1,110 +1,129 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+
+// panning properties
+
+[System.Serializable]
+public class Panning {
+	public Vector3 position = new Vector3(0, 0.35f, 0);
+	public float speed = 1f;
+	public float interpolation = 5f;
+	public bool enabled = false;
+}
+
+
+// rotating properties
+
+[System.Serializable]
+public class Rotating {
+	public Vector3 angle = new Vector3(55, 30, 0);
+	public float speed = 25f;
+	public float interpolation = 25f;
+	public bool enabled = false;
+}
+
+
+// zooming properties
+
+[System.Serializable]
+public class Zooming {
+	[Range(1f, 120f)]
+	public float distance = 60f;
+	public float speed = 15f;
+	public float interpolation = 5f;
+	[HideInInspector]
+	public float distanceMin = 3f;
+	[HideInInspector]
+	public float distanceMax = 120f;
+}
+
+
+// camera class
+
 public class CameraControls : MonoBehaviour {
 
 	public Transform target;
-	
-	
-	public float interval = 5.0f; // bigger numbers increase interpolation speed
-
-	// input controls
-	public bool mouseControlsEnabled = false;
-	public bool touchControlsEnabled = false;
-	
-
-	// pan
-	private bool panning = false;
-	public float panSpeed = 0.2f;
-	public Vector3 center = new Vector3(0, 0.35f, 0);
-
-	// rotate
-	private bool rotating = false;
-	public Vector3 angle = new Vector3(45, 45, 0);
-	public Vector2 rotationSpeed = new Vector3(50, 25, 0);
-	public float xAngleMin = -20;
-	public float xAngleMax = 89;
-
-
-	// zoom
-	public float distance = 10;
-	public float distanceMin = 1;
-	public float distanceMax = 20;
-	public float zoomSpeed = 15;
+	//public float interval = 5.0f; // bigger numbers increase interpolation speed
+	public Panning panning;
+	public Rotating rotating;
+	public Zooming zooming;
 
 
 	void Start () {
 		// warn if there is no target
 		if(!target) {
-			print("No camera target selected!");
+			Debug.LogError("A camera target is required!");
 			return;
 		}
+
+		// initialize position
+		//get new pos and rot from increments
+		transform.rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
+		transform.position =  transform.rotation * new Vector3(0.0f, 0.0f, -zooming.distance) + target.position + panning.position;
 	}
 
+
+	// manage user input on update
 
 	void Update () {
-		setInputControls();
+		// middle button to pan
+		if (Input.GetMouseButtonDown(2)) panning.enabled = true;
+		if (Input.GetMouseButtonUp(2)) panning.enabled = false;
+		if (panning.enabled) {
+			float pspeed = panning.speed * zooming.distance * 0.025f;
+			Vector3 direction = 
+				Camera.main.transform.TransformDirection(
+					new Vector3(Input.GetAxis("Mouse X") * pspeed, 0, Input.GetAxis("Mouse Y") * pspeed)
+				);
+			panning.position.x -= direction.x;
+			panning.position.z -= direction.z;
+		}
+
+		// right button to rotate
+		if (Input.GetMouseButtonDown(1)) rotating.enabled = true;
+		if (Input.GetMouseButtonUp(1)) rotating.enabled = false;
+		if (rotating.enabled) {
+			rotating.angle.y += Input.GetAxis("Mouse X") * rotating.speed; //.y;
+			rotating.angle.x -= Input.GetAxis("Mouse Y") * rotating.speed; //.x;
+			//angle.x = ClampAngle(angle.x, xAngleMin, xAngleMax);
+		}
+
+		// mouse wheel to zoom
+		zooming.distance = Mathf.Clamp(
+			zooming.distance - Input.GetAxis("Mouse ScrollWheel") * zooming.speed, 
+			zooming.distanceMin, 
+			zooming.distanceMax
+		);
 	}
 
+
+	// update position and rotation on late update
 
 	void LateUpdate () {
 		if (!target) return;
 
 		//get new pos and rot from increments
-		// transform.RotateAround(Vector3.zero, Vector3.up, 20 * Time.deltaTime);
-		Quaternion rotation = Quaternion.Euler(angle.x, angle.y, 0);
-		
-		//Vector3 c = rotating ? center : getDelta3d(center);
-		Vector3 position =  rotation * new Vector3(0.0f, 0.0f, -distance) + target.position + getDelta3d(center);
-
-
-		//position = getDelta3d(position);
+		Quaternion rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
+		Vector3 position =  rotation * new Vector3(0.0f, 0.0f, -zooming.distance) + target.position + panning.position;
 
 		//interpolate camera to new pos and rotation
-		float interval = 0;//this.interval;
+		//float interval = this.interval;
 		//if (rotating) interval = 25;
 
-		if (interval != 0) {
-			float time = Time.deltaTime;
+		//float interval = 5;
+		/*if (rotating.enabled) interval = rotating.interpolation;
+		if (panning.enabled) interval = rotating.panning;
+		if (zooming.enabled) interval = rotating.zooming;*/
+		float interval = rotating.enabled ? rotating.interpolation : panning.interpolation;
 
-			transform.position = Vector3.Slerp(transform.position, position, time * interval);
-			transform.rotation = Quaternion.Slerp (transform.rotation, rotation, time * interval);
-
-		} else {
-			transform.position = position;
-			transform.rotation = rotation;
-		}
+		float time = Time.deltaTime;
+		transform.position = Vector3.Slerp(transform.position, position, time * interval);
+		transform.rotation = Quaternion.Slerp (transform.rotation, rotation, time * 25);
 	}
 
 
-	void setInputControls () {
-		// middle button to pan
-		if (Input.GetMouseButtonDown(2)) panning = true;
-		if (Input.GetMouseButtonUp(2)) panning = false;
-		if (panning) {
-			center.x -= Input.GetAxis("Mouse X") * panSpeed;
-			center.z -= Input.GetAxis("Mouse Y") * panSpeed;
-			//center = getDelta3d(center);
-		}
-
-		// right button to rotate
-		if (Input.GetMouseButtonDown(1)) rotating = true;
-		if (Input.GetMouseButtonUp(1)) rotating = false;
-		if (rotating) {
-			angle.y += Input.GetAxis("Mouse X") * rotationSpeed.y;
-			angle.x -= Input.GetAxis("Mouse Y") * rotationSpeed.x;
-			angle.x = ClampAngle(angle.x, xAngleMin, xAngleMax);
-		}
-
-		// mouse wheel to zoom
-		setDistance(Input.GetAxis("Mouse ScrollWheel"));
-	}
-
-
-	void setDistance (float mouseZ) {
-		distance = Mathf.Clamp(distance - mouseZ * zoomSpeed, distanceMin, distanceMax);
-	}
-
+	// utility functions
 
 	float ClampAngle(float angle , float min , float max ) {
 		if (angle < -360)
@@ -112,13 +131,6 @@ public class CameraControls : MonoBehaviour {
 		if (angle > 360)
 			angle -= 360;
 		return Mathf.Clamp (angle, min, max);
-	}
-
-
-	public Vector3 getDelta3d(Vector3 pos) {
-		Vector3 cameraRelativeVector = Camera.main.transform.TransformDirection(pos.x, pos.z, pos.z);
-		cameraRelativeVector.y = pos.y;
-		return cameraRelativeVector;
 	}
 
 
