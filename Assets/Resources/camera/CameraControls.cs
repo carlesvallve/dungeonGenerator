@@ -2,14 +2,19 @@
 using System.Collections;
 
 
+public enum Controls { MouseLeft = 0, MouseRight = 1, MouseMiddle = 2, MouseWheel = 3 };
+
 // panning properties
 
 [System.Serializable]
 public class Panning {
+	public Controls control = Controls.MouseLeft;
 	public Vector3 position = new Vector3(0, 0.35f, 0);
 	public float speed = 1f;
 	public float interpolation = 5f;
 	public bool enabled = false;
+
+	
 }
 
 
@@ -17,11 +22,11 @@ public class Panning {
 
 [System.Serializable]
 public class Rotating {
+	public Controls control = Controls.MouseRight;
 	public Vector3 angle = new Vector3(55, 30, 0);
 	public float speed = 25f;
 	public float interpolation = 25f;
 	public bool enabled = false;
-
 	public float xAngleMax = 90f;
 	public float xAngleMin = 0f;
 }
@@ -47,7 +52,6 @@ public class Zooming {
 public class CameraControls : MonoBehaviour {
 
 	public Transform target;
-	//public float interval = 5.0f; // bigger numbers increase interpolation speed
 	public Panning panning;
 	public Rotating rotating;
 	public Zooming zooming;
@@ -61,7 +65,6 @@ public class CameraControls : MonoBehaviour {
 		}
 
 		// initialize position
-		//get new pos and rot from increments
 		transform.rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
 		transform.position =  transform.rotation * new Vector3(0.0f, 0.0f, -zooming.distance) + target.position + panning.position;
 	}
@@ -71,8 +74,8 @@ public class CameraControls : MonoBehaviour {
 
 	void Update () {
 		// middle button to pan
-		if (Input.GetMouseButtonDown(2)) panning.enabled = true;
-		if (Input.GetMouseButtonUp(2)) panning.enabled = false;
+		if (Input.GetMouseButtonDown((int)panning.control)) panning.enabled = true;
+		if (Input.GetMouseButtonUp((int)panning.control)) panning.enabled = false;
 		if (panning.enabled) {
 			float pspeed = panning.speed; // * zooming.distance * 0.025f;
 			Vector3 direction = Camera.main.transform.TransformDirection(new Vector3(
@@ -81,13 +84,12 @@ public class CameraControls : MonoBehaviour {
 				Input.GetAxis("Mouse Y") * pspeed
 			));
 			panning.position.x -= direction.x;
-			//panning.position.y -= direction.z;
 			panning.position.z -= direction.z;
 		}
 
 		// right button to rotate
-		if (Input.GetMouseButtonDown(1)) rotating.enabled = true;
-		if (Input.GetMouseButtonUp(1)) rotating.enabled = false;
+		if (Input.GetMouseButtonDown((int)rotating.control)) rotating.enabled = true;
+		if (Input.GetMouseButtonUp((int)rotating.control)) rotating.enabled = false;
 		if (rotating.enabled) {
 			rotating.angle.y += Input.GetAxis("Mouse X") * rotating.speed;
 			rotating.angle.x -= Input.GetAxis("Mouse Y") * rotating.speed;
@@ -113,18 +115,11 @@ public class CameraControls : MonoBehaviour {
 		Vector3 position =  rotation * new Vector3(0.0f, 0.0f, -zooming.distance) + target.position + panning.position;
 
 		//interpolate camera to new pos and rotation
-		//float interval = this.interval;
-		//if (rotating) interval = 25;
-
-		//float interval = 5;
-		/*if (rotating.enabled) interval = rotating.interpolation;
-		if (panning.enabled) interval = rotating.panning;
-		if (zooming.enabled) interval = rotating.zooming;*/
 		float interval = rotating.enabled ? rotating.interpolation : panning.interpolation;
 
-		float time = Time.deltaTime;
-		transform.position = Vector3.Slerp(transform.position, position, time * interval);
-		transform.rotation = Quaternion.Slerp (transform.rotation, rotation, time * 25);
+		float time = Time.deltaTime * interval;
+		transform.position = Vector3.Slerp(transform.position, position, time);
+		transform.rotation = Quaternion.Slerp (transform.rotation, rotation, time);
 	}
 
 
