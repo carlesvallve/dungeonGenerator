@@ -21,6 +21,9 @@ public class Rotating {
 	public float speed = 25f;
 	public float interpolation = 25f;
 	public bool enabled = false;
+
+	public float xAngleMax = 90f;
+	public float xAngleMin = 0f;
 }
 
 
@@ -71,12 +74,14 @@ public class CameraControls : MonoBehaviour {
 		if (Input.GetMouseButtonDown(2)) panning.enabled = true;
 		if (Input.GetMouseButtonUp(2)) panning.enabled = false;
 		if (panning.enabled) {
-			float pspeed = panning.speed * zooming.distance * 0.025f;
-			Vector3 direction = 
-				Camera.main.transform.TransformDirection(
-					new Vector3(Input.GetAxis("Mouse X") * pspeed, 0, Input.GetAxis("Mouse Y") * pspeed)
-				);
+			float pspeed = panning.speed; // * zooming.distance * 0.025f;
+			Vector3 direction = Camera.main.transform.TransformDirection(new Vector3(
+				Input.GetAxis("Mouse X") * pspeed, 
+				Input.GetAxis("Mouse Y") * pspeed,
+				Input.GetAxis("Mouse Y") * pspeed
+			));
 			panning.position.x -= direction.x;
+			//panning.position.y -= direction.z;
 			panning.position.z -= direction.z;
 		}
 
@@ -84,9 +89,9 @@ public class CameraControls : MonoBehaviour {
 		if (Input.GetMouseButtonDown(1)) rotating.enabled = true;
 		if (Input.GetMouseButtonUp(1)) rotating.enabled = false;
 		if (rotating.enabled) {
-			rotating.angle.y += Input.GetAxis("Mouse X") * rotating.speed; //.y;
-			rotating.angle.x -= Input.GetAxis("Mouse Y") * rotating.speed; //.x;
-			//angle.x = ClampAngle(angle.x, xAngleMin, xAngleMax);
+			rotating.angle.y += Input.GetAxis("Mouse X") * rotating.speed;
+			rotating.angle.x -= Input.GetAxis("Mouse Y") * rotating.speed;
+			rotating.angle.x = ClampAngle(rotating.angle.x, rotating.xAngleMin, rotating.xAngleMax);
 		}
 
 		// mouse wheel to zoom

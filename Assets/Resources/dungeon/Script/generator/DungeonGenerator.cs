@@ -47,9 +47,8 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	
 	// Prefabs and Instance Management
 	public GameObject containerRooms;
-	public GameObject prefabWall01;
-	public GameObject prefabWall02;
-	public GameObject prefabFloor01;
+	public GameObject prefabFloor;
+	public GameObject prefabWall;
 	public GameObject meshCombiner;
 	
 	// The Random Seed
@@ -317,13 +316,13 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 
 	private GameObject createFloor (GameObject container, float row, float col) {
-		GameObject floor = GameObject.Instantiate(prefabFloor01,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
+		GameObject floor = GameObject.Instantiate(prefabFloor,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
 		floor.transform.parent = container.transform;
 		floor.transform.localScale = new Vector3(1, Random.Range(0.1f, 0.3f), 1);
 
 		float h = 0.01f;
-		int prob = Random.Range(1, 100);
-		if (prob <= 40) h += Random.Range(0f, 0.15f);
+		//int prob = Random.Range(1, 100);
+		//if (prob <= 40) h += Random.Range(0f, 0.15f);
 
 		floor.transform.localScale = new Vector3(1, h, 1);
 		floor.transform.localPosition = new Vector3(col, h / 2, row);
@@ -333,14 +332,14 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 
 	private GameObject createWall (GameObject container, float row, float col) {
-		GameObject wall = GameObject.Instantiate(prefabWall01,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
+		GameObject wall = GameObject.Instantiate(prefabWall,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
 		wall.transform.parent = container.transform;
 
 		float h = 1.0f;
-		int prob = Random.Range(1, 100);
-		if (prob <= 40) h += Random.Range(0f, 0.3f);
-		if (prob <= 20) h += Random.Range(0f, 1.5f);
-		if (prob <= 2) h += Random.Range(0f, 1.0f);
+		//int prob = Random.Range(1, 100);
+		//if (prob <= 40) h += Random.Range(0f, 0.3f);
+		//if (prob <= 20) h += Random.Range(0f, 1.5f);
+		//if (prob <= 2) h += Random.Range(0f, 1.0f);
 
 		wall.transform.localScale = new Vector3(1, h, 1);
 		wall.transform.localPosition = new Vector3(wall.transform.position.x, h / 2, wall.transform.position.z);
