@@ -31,7 +31,11 @@ public class World : MonoBehaviour {
 		}
 
 		if (Input.GetKeyDown("2")) {
-			interpolateCamera();
+			changeCameraTarget();
+		}
+
+		if (Input.GetKeyDown("3")) {
+			changeCameraView();
 		}
 	}
 
@@ -66,16 +70,19 @@ public class World : MonoBehaviour {
 	}
 
 
-	private void interpolateCamera () {
+	private void changeCameraTarget () {
 		if (cam.target == cube1.transform) {
 			cam.target = cube2.transform;
 		} else {
 			cam.target = cube1.transform;
 		}
 
-		cam.rotating.angle = new Vector3(Random.Range(10, 60), Random.Range(-360, 360), 0);
-		cam.zooming.distance = Random.Range(10, 80);
-		cam.panning.position = Vector3.zero;
+		cam.interpolateTo (Vector3.zero, new Vector3(Random.Range(10, 90), Random.Range(0, 360), 0), Random.Range(10, 80));
+	}
+
+
+	private void changeCameraView () {
+		cam.interpolateTo (Vector3.zero, new Vector3(Random.Range(10, 90), Random.Range(0, 360), 0), Random.Range(10, 80));
 	}
 
 
