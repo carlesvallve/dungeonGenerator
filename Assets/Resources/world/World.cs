@@ -6,16 +6,32 @@ public class World : MonoBehaviour {
 
 	public DungeonGenerator dungeon;
 
+	CameraControls cam;
+	GameObject cube1;
+	GameObject cube2;
+
 
 	void Start () {
 		dungeon = GameObject.Find("Dungeon").GetComponent<DungeonGenerator>();
+
+		cam = Camera.main.GetComponent<CameraControls>();
+
+		cube1 = GameObject.Find("Cube1");
+		cube2 = GameObject.Find("Cube2");
 	}
 
 	
 	void Update () {
-		// SPACE -> Generate a new Test Dungeon
-		if (Input.GetButtonDown("Jump")) {
+		if (Input.GetKeyDown("space")) {
 			generateDungeon();
+		}
+
+		if (Input.GetKeyDown("1")) {
+			locateCubesAtRandom();
+		}
+
+		if (Input.GetKeyDown("2")) {
+			interpolateCamera();
 		}
 	}
 
@@ -29,6 +45,8 @@ public class World : MonoBehaviour {
 			Debug.Log ("Dungeon Generation Started");
 			dungeon.GenerateDungeon(dungeon.seed);
 
+			locateCubesAtRandom();
+
 			// initialize grid
 			//initGrid();
 
@@ -39,6 +57,25 @@ public class World : MonoBehaviour {
 
 			// create some monsters
 			monsters = createMonsters(80);*/
+	}
+
+
+	private void locateCubesAtRandom () {
+		cube1.transform.position = new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0.6f, Random.Range(0, dungeon.MAP_HEIGHT));
+		cube2.transform.position = new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0.6f, Random.Range(0, dungeon.MAP_HEIGHT));
+	}
+
+
+	private void interpolateCamera () {
+		if (cam.target == cube1.transform) {
+			cam.target = cube2.transform;
+		} else {
+			cam.target = cube1.transform;
+		}
+
+		cam.rotating.angle = new Vector3(Random.Range(10, 60), Random.Range(-360, 360), 0);
+		cam.zooming.distance = Random.Range(10, 80);
+		cam.panning.position = Vector3.zero;
 	}
 
 

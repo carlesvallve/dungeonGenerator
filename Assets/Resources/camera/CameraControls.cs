@@ -15,6 +15,7 @@ public class Panning {
 	public Vector3 position = new Vector3(0, 0.35f, 0);
 	public float speed = 1f;
 	public float interpolation = 5f;
+	public float distanceFactor = 0.025f;
 	public bool enabled = false;
 }
 
@@ -78,7 +79,7 @@ public class CameraControls : MonoBehaviour {
 		if (Input.GetMouseButtonDown((int)panning.control)) panning.enabled = true;
 		if (Input.GetMouseButtonUp((int)panning.control)) panning.enabled = false;
 		if (panning.enabled) {
-			float pspeed = panning.speed; // * zooming.distance * 0.025f;
+			float pspeed = panning.speed * zooming.distance * panning.distanceFactor;
 			Vector3 direction = this.camera.transform.TransformDirection(new Vector3(
 				Input.GetAxis("Mouse X") * pspeed, 
 				Input.GetAxis("Mouse Y") * pspeed,
@@ -138,6 +139,8 @@ public class CameraControls : MonoBehaviour {
 			angle -= 360;
 		return Mathf.Clamp (angle, min, max);
 	}
+
+
 
 
 	//**********************************
