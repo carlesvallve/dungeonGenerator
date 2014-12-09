@@ -2,7 +2,10 @@
 using System.Collections;
 
 
+// control modes
+
 public enum Controls { MouseLeft = 0, MouseRight = 1, MouseMiddle = 2, MouseWheel = 3 };
+
 
 // panning properties
 
@@ -13,8 +16,6 @@ public class Panning {
 	public float speed = 1f;
 	public float interpolation = 5f;
 	public bool enabled = false;
-
-	
 }
 
 
@@ -38,8 +39,8 @@ public class Rotating {
 public class Zooming {
 	[Range(1f, 120f)]
 	public float distance = 60f;
-	public float speed = 15f;
-	public float interpolation = 5f;
+	public float speed = 25f;
+	public float orthographicFactor = 0.25f;
 	[HideInInspector]
 	public float distanceMin = 3f;
 	[HideInInspector]
@@ -64,6 +65,11 @@ public class CameraControls : MonoBehaviour {
 			return;
 		}
 
+		// get if camera is ortographic
+		print(this.camera.orthographic + " " + this.camera.orthographicSize);
+		//camera.orthographic = true;
+        //camera.orthographicSize = 5;
+
 		// initialize position
 		transform.rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
 		transform.position =  transform.rotation * new Vector3(0.0f, 0.0f, -zooming.distance) + target.position + panning.position;
@@ -78,7 +84,7 @@ public class CameraControls : MonoBehaviour {
 		if (Input.GetMouseButtonUp((int)panning.control)) panning.enabled = false;
 		if (panning.enabled) {
 			float pspeed = panning.speed; // * zooming.distance * 0.025f;
-			Vector3 direction = Camera.main.transform.TransformDirection(new Vector3(
+			Vector3 direction = this.camera.transform.TransformDirection(new Vector3(
 				Input.GetAxis("Mouse X") * pspeed, 
 				Input.GetAxis("Mouse Y") * pspeed,
 				Input.GetAxis("Mouse Y") * pspeed
@@ -97,11 +103,9 @@ public class CameraControls : MonoBehaviour {
 		}
 
 		// mouse wheel to zoom
-		zooming.distance = Mathf.Clamp(
-			zooming.distance - Input.GetAxis("Mouse ScrollWheel") * zooming.speed, 
-			zooming.distanceMin, 
-			zooming.distanceMax
-		);
+		float distance = Mathf.Clamp(zooming.distance -  
+			Input.GetAxis("Mouse ScrollWheel") * zooming.speed, zooming.distanceMin, zooming.distanceMax);
+		zooming.distance = Mathf.Lerp(zooming.distance, distance, Time.deltaTime * rotating.interpolation);
 	}
 
 
@@ -116,10 +120,17 @@ public class CameraControls : MonoBehaviour {
 
 		//interpolate camera to new pos and rotation
 		float interval = rotating.enabled ? rotating.interpolation : panning.interpolation;
+		transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * interval);
+		transform.rotation = Quaternion.Lerp (transform.rotation, rotation, Time.deltaTime * interval);
 
-		float time = Time.deltaTime * interval;
-		transform.position = Vector3.Slerp(transform.position, position, time);
-		transform.rotation = Quaternion.Slerp (transform.rotation, rotation, time);
+		// set distance in orthographic mode
+		if (camera.orthographic) {
+			camera.orthographicSize = Mathf.Lerp(
+				camera.orthographicSize, 
+				zooming.distance * zooming.orthographicFactor, 
+				Time.deltaTime * rotating.interpolation * zooming.orthographicFactor
+			);
+		}
 	}
 
 
