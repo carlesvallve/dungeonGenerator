@@ -108,11 +108,10 @@ public class CameraControls : MonoBehaviour {
 		}
 
 		// mouse wheel to zoom
-		float distance = Mathf.Clamp(zooming.distance -  
-			Input.GetAxis("Mouse ScrollWheel") * zooming.speed, zooming.distanceMin, zooming.distanceMax);
-
-		//zooming.distance = Mathf.Lerp(zooming.distance, distance, Time.deltaTime * rotating.interpolation);
-		distanceTo = distance;
+		if (Input.GetAxis("Mouse ScrollWheel") != 0) {
+			distanceTo = Mathf.Clamp(zooming.distance -  
+				Input.GetAxis("Mouse ScrollWheel") * zooming.speed, zooming.distanceMin, zooming.distanceMax);
+		}
 	}
 
 
@@ -121,18 +120,16 @@ public class CameraControls : MonoBehaviour {
 	void LateUpdate () {
 		if (!target) return;
 
+		// reset interpolation goals if we are zooming or panning
 		if (panning.enabled || rotating.enabled) {
 			positionTo = panning.position;
 			angleTo = rotating.angle;
-			//distanceTo = zooming.distance;
 		}
 
-		if (positionTo != panning.position || angleTo != rotating.angle || distanceTo != zooming.distance) {
-			print ("updating");
-			rotating.angle = Vector3.Lerp(rotating.angle, angleTo, Time.deltaTime * panning.interpolation);
-			panning.position = Vector3.Lerp(panning.position, positionTo, Time.deltaTime * panning.interpolation);
-			zooming.distance = Mathf.Lerp(zooming.distance, distanceTo, Time.deltaTime * rotating.interpolation);
-		}
+		// update props to interpolation goals
+		rotating.angle = Vector3.Lerp(rotating.angle, angleTo, Time.deltaTime * panning.interpolation);
+		panning.position = Vector3.Lerp(panning.position, positionTo, Time.deltaTime * panning.interpolation);
+		zooming.distance = Mathf.Lerp(zooming.distance, distanceTo, Time.deltaTime * rotating.interpolation);
 
 		//get new pos and rot from increments
 		Quaternion rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
@@ -141,7 +138,7 @@ public class CameraControls : MonoBehaviour {
 		//interpolate camera to new pos and rotation
 		float interval = rotating.enabled ? rotating.interpolation : panning.interpolation;
 		transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * interval);
-		transform.rotation = Quaternion.Slerp (transform.rotation, rotation, Time.deltaTime * interval);
+		transform.rotation = Quaternion.Lerp (transform.rotation, rotation, Time.deltaTime * interval);
 
 		// set distance in orthographic mode
 		if (camera.orthographic) {
@@ -151,6 +148,15 @@ public class CameraControls : MonoBehaviour {
 				Time.deltaTime * rotating.interpolation * zooming.orthographicFactor
 			);
 		}
+	}
+
+
+	// set new goals to interpolate to
+
+	public void interpolateTo (Vector3 position, Vector3 angle, float distance) {
+		positionTo = position;
+		angleTo = angle;
+		distanceTo = distance;
 	}
 
 
@@ -164,34 +170,6 @@ public class CameraControls : MonoBehaviour {
 		return Mathf.Clamp (angle, min, max);
 	}
 
-
-	public void setAngle (Vector3 angle) {
-		print (angle.y);
-		//Quaternion rot = Quaternion.Euler(0, 30, 0);
-
-		//Quaternion rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
-		//Quaternion rotationTo = Quaternion.Euler(angle.x, angle.y, 0);
-		//rotating.angle = Quaternion.Lerp (rotation, rotationTo, Time.deltaTime * rotating.interpolation);
-
-		
-	}
-
-
-	public void setPos (Vector3 pos) {
-		//Quaternion rot = Quaternion.Euler(0, 30, 0);
-
-		//Quaternion rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
-		//Quaternion rotationTo = Quaternion.Euler(angle.x, angle.y, 0);
-		//rotating.angle = Quaternion.Lerp (rotation, rotationTo, Time.deltaTime * rotating.interpolation);
-
-		
-	}
-
-	public void interpolateTo (Vector3 position, Vector3 angle, float distance) {
-		positionTo = position;
-		angleTo = angle;
-		distanceTo = distance;
-	}
 
 	//**********************************
 	// Controls for device
