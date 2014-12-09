@@ -65,11 +65,6 @@ public class CameraControls : MonoBehaviour {
 			return;
 		}
 
-		// get if camera is ortographic
-		print(this.camera.orthographic + " " + this.camera.orthographicSize);
-		//camera.orthographic = true;
-        //camera.orthographicSize = 5;
-
 		// initialize position
 		transform.rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
 		transform.position =  transform.rotation * new Vector3(0.0f, 0.0f, -zooming.distance) + target.position + panning.position;
