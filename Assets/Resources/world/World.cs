@@ -10,6 +10,8 @@ public class World : MonoBehaviour {
 	GameObject cube1;
 	GameObject cube2;
 
+	Entity entity;
+
 
 	void Start () {
 		dungeon = GameObject.Find("Dungeon").GetComponent<DungeonGenerator>();
@@ -49,8 +51,12 @@ public class World : MonoBehaviour {
 			Debug.Log ("Dungeon Generation Started");
 			dungeon.GenerateDungeon(dungeon.seed);
 
-			locateCubesAtRandom();
+			//locateCubesAtRandom();
 
+			entity = createEntity(new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0.6f, Random.Range(0, dungeon.MAP_HEIGHT)));
+
+			cam.target = entity.transform;
+			
 			// initialize grid
 			//initGrid();
 
@@ -61,6 +67,16 @@ public class World : MonoBehaviour {
 
 			// create some monsters
 			monsters = createMonsters(80);*/
+	}
+
+
+	private Entity createEntity (Vector3 pos) {
+		GameObject obj = (GameObject)Instantiate(Resources.Load("entity/Ent"));
+		
+		Entity entity = obj.GetComponent<Entity>();
+		entity.init(this.transform, pos);
+
+		return entity;
 	}
 
 
