@@ -323,9 +323,6 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		floor.transform.localScale = new Vector3(1, Random.Range(0.1f, 0.3f), 1);
 
 		float h = 0.01f;
-		//int prob = Random.Range(1, 100);
-		//if (prob <= 40) h += Random.Range(0f, 0.15f);
-
 		floor.transform.localScale = new Vector3(1, h, 1);
 		floor.transform.localPosition = new Vector3(col, 0, row); // h / 2
 
@@ -338,18 +335,10 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		wall.transform.parent = container.transform;
 
 		float h = 1.0f;
-		//int prob = Random.Range(1, 100);
-		//if (prob <= 40) h += Random.Range(0f, 0.3f);
-		//if (prob <= 20) h += Random.Range(0f, 1.5f);
-		//if (prob <= 2) h += Random.Range(0f, 1.0f);
-
 		wall.transform.localScale = new Vector3(1, h, 1);
 		wall.transform.localPosition = new Vector3(wall.transform.position.x, 0, wall.transform.position.z); // h / 2
 
-		// TODO: This gives us too many draw calls, need to figure a way to optimise it...
-		//wall.renderer.material.SetTextureScale("_MainTex", new Vector2(wall.transform.lossyScale.x / 3.0f, wall.transform.lossyScale.y / 3.0f));
-		//wall.renderer.material.SetTextureScale("_BumpMap", new Vector2(wall.transform.lossyScale.x / 3.0f, wall.transform.lossyScale.y / 3.0f));
-	
+
 		return wall;
 	}
 
@@ -358,6 +347,21 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	// Walkability grid
 	// *************************************************************
 
+	public void logGrid () {
+		print("Grid " + MAP_WIDTH + ", " + MAP_HEIGHT);
+
+		string str = "";
+		for (int y = 0; y < MAP_HEIGHT; y++) {
+			
+			for (int x = 0; x < MAP_WIDTH; x++) {
+				Tile tile = tiles[x, y];
+				str += tile.getWalkable() ? "1" : "0"; //id;
+			}
+			str += "\n";
+		}
+
+		print (str);
+	}
 
 	
 	// *************************************************************

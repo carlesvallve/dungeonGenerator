@@ -51,6 +51,8 @@ public class World : MonoBehaviour {
 			Debug.Log ("Dungeon Generation Started");
 			dungeon.GenerateDungeon(dungeon.seed);
 
+			dungeon.logGrid();
+
 			//locateCubesAtRandom();
 
 			entity = createEntity(new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0, Random.Range(0, dungeon.MAP_HEIGHT)));
