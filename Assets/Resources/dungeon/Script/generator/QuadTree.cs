@@ -30,12 +30,20 @@ public class QuadTree {
 	
 	// Room it contains
 	public Room room;
+
+	public int id;
+	public Color color = Color.white;
+	public List<Tile> tiles;
 	
 	// Constructor
 	public QuadTree(AABB _aabb) {
 		boundary = _aabb;
 		dungeon = DungeonGenerator.instance;
 		roomRealMinSize = dungeon.ROOM_MIN_SIZE + dungeon.ROOM_WALL_BORDER*2; // room floor size + "BORDER" walls for each axis
+	
+		//this.id = id;
+		this.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+		this.tiles = new List<Tile>();
 	}
 	
 	/*

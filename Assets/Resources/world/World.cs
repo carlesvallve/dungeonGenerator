@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 public class World : MonoBehaviour {
 
+	public TouchControls touchControls;
+	public TouchLayer touchLayer;
+
 	public DungeonGenerator dungeon;
 
 	CameraControls cam;
@@ -11,6 +14,8 @@ public class World : MonoBehaviour {
 	GameObject cube2;
 
 	Entity entity;
+
+	public Astar astar;
 
 
 	void Start () {
@@ -20,6 +25,8 @@ public class World : MonoBehaviour {
 
 		cube1 = GameObject.Find("Cube1");
 		cube2 = GameObject.Find("Cube2");
+
+		initTouchControls();
 	}
 
 	
@@ -51,6 +58,8 @@ public class World : MonoBehaviour {
 			Debug.Log ("Dungeon Generation Started");
 			dungeon.GenerateDungeon(dungeon.seed);
 
+			astar = new Astar(dungeon.tiles);
+
 			//dungeon.logGrid();
 			//dungeon.logRooms();
 
@@ -58,8 +67,10 @@ public class World : MonoBehaviour {
 				Destroy(entity.gameObject);
 			}
 
-			entity = createEntity(new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0, Random.Range(0, dungeon.MAP_HEIGHT)));
-			entity.transform.localPosition = dungeon.getRandomPosInDungeon();
+			Vector3 pos = dungeon.getRandomPosInDungeon();
+			Vector3 rot = new Vector3(0, new int[] { 0, 90, 180, 270 }[Random.Range(0, 4)], 0);
+			entity = createEntity(pos, rot);
+			
 			cam.target = entity.transform;
 
 			// locateCubesAtRandom();
@@ -77,11 +88,11 @@ public class World : MonoBehaviour {
 	}
 
 
-	private Entity createEntity (Vector3 pos) {
+	private Entity createEntity (Vector3 pos, Vector3 rot) {
 		GameObject obj = (GameObject)Instantiate(Resources.Load("entity/Ent"));
 		
 		Entity entity = obj.GetComponent<Entity>();
-		entity.init(this.transform, pos);
+		entity.init(this, this.transform, pos, rot);
 
 		return entity;
 	}
@@ -126,13 +137,13 @@ public class World : MonoBehaviour {
 				}
 			}
 		}
-	}
+	}*/
 
 	// *****************************************************
 	// Gestures
 	// *****************************************************
 
-	/*private void initTouchControls() {
+	private void initTouchControls() {
 		// register touch events
 		touchControls = GameObject.Find("TouchControls").GetComponent<TouchControls>();
 
@@ -149,7 +160,12 @@ public class World : MonoBehaviour {
 		Transform obj = e.activeTouch.getObject3d(Camera.main);
 		if (!obj) return;
 
-		player.moveTo(new Vector3(obj.position.x, 0, obj.position.z));
+		Tile tile = dungeon.getTileAtPos(obj.transform.position);
+		print(obj + " " + tile);
+
+
+		entity.moveTo(obj.transform.position);
+		//player.moveTo(new Vector3(obj.position.x, 0, obj.position.z));
 
 		// get tile at current path node
 		//Tile tile = dungeon.tiles[(int)path[0].y, (int)path[0].x];
@@ -170,5 +186,5 @@ public class World : MonoBehaviour {
 
 	public void onTouchSwipe (TouchEvent e) {
 		//print ("swipe " + e.activeTouch.getVelocity3d(Camera.main));
-	}*/
+	}
 }

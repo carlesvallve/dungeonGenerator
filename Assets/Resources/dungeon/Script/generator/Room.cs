@@ -12,10 +12,9 @@ public class Room {
 	public AABB boundary;
 	public QuadTree quadtree;
 
-	public List<Tile> tiles;
-	
 	public int id;
 	public Color color = Color.white;
+	public List<Tile> tiles;
 
 	public Room (int id, AABB b) {
 		boundary = b;
