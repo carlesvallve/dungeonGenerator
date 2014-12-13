@@ -13,8 +13,8 @@ public class Entity : MonoBehaviour {
 	private Sequence moveSequence;
 
 
-	private float speed = 0.25f;
-
+	private float speed = 0.2f;
+	private float jumpForce = 9f;
 
 	public void init (World world, Transform parent, Vector3 pos, Vector3 rot) {
 		this.world = world;
@@ -24,7 +24,7 @@ public class Entity : MonoBehaviour {
 		transform.localPosition = pos;
 		transform.localEulerAngles = rot;
 
-		DOTween.defaultEaseType = Ease.InOutQuad;
+		DOTween.defaultEaseType = Ease.Linear; //InOutQuad;
 	}
 
 
@@ -41,6 +41,8 @@ public class Entity : MonoBehaviour {
 		for(int i = 0; i < path.Count; i++) {
 			addStep(i);
 		}
+
+		//moveSequence.PrependCallback(jump);
 
 		// if enough angle diff, rotate ent and delay sequence by rotation time
 		Vector3 vec = new Vector3(path[0].x, 0, path[0].y) - transform.position;
@@ -70,6 +72,8 @@ public class Entity : MonoBehaviour {
 	private void endStep (int i, Vector3 pos) {
 		//print("step" + i + " -> " + pos);
 
+		//if (i < path.Count - 1) { jump(); }
+
 		/*if (i < path.Count) {
 			Vector3 nextPos = path[i + 1];
 			Tile tile = world.dungeon.getTileAtPos(new Vector3(nextPos.x, 0, nextPos.z));
@@ -81,8 +85,21 @@ public class Entity : MonoBehaviour {
 		}*/
 	}
 
+	private void jump () {
+		// reset box physics
+		body.rigidbody.velocity = Vector3.zero;
+		body.rigidbody.angularVelocity = Vector3.zero;
 
-	void Update () {
+		//body.rigidbody.Sleep();
+		//body.position = Vector3.zero;
+
+		// make box jump
+		//Audio.play("audio/Squish", 0.5f, Random.Range(1.0f, 2.0f));
+		body.rigidbody.AddForce( new Vector3(0, jumpForce * body.rigidbody.mass, 0), ForceMode.Impulse);
+	}
+
+
+	/*void Update () {
 		snapToGround();
 	}
 
@@ -99,5 +116,5 @@ public class Entity : MonoBehaviour {
 				);
 			}
 		}
-	}
+	}*/
 }
