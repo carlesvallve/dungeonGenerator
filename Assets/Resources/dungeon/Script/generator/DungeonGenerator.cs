@@ -49,6 +49,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	public GameObject containerRooms;
 	public GameObject prefabFloor;
 	public GameObject prefabWall;
+	public GameObject prefabDoor;
 	public GameObject meshCombiner;
 	
 	// The Random Seed
@@ -248,24 +249,22 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	// Generate walls when there's something near
 	public void GenerateWalls() {
 		// Place walls
-		for (int i = 0; i < MAP_HEIGHT; i++) {
-			for (int j = 0; j < MAP_WIDTH; j++) {
+		for (int y = 0; y < MAP_HEIGHT; y++) {
+			for (int x = 0; x < MAP_WIDTH; x++) {
 				bool room_near = false;
-				if (IsPassable(i,j)) continue;
-				if (i > 0) if (IsPassable(i-1,j)) room_near = true;
-				if (i < MAP_HEIGHT-1) if (IsPassable(i+1,j)) room_near = true;
-				if (j > 0) if (IsPassable(i,j-1)) room_near = true;
-				if (j < MAP_WIDTH-1) if (IsPassable(i,j+1)) room_near = true;
-				if (room_near) SetWall(i,j);
+				if (IsPassable(x,y)) continue;
+				if (x > 0) if (IsPassable(x - 1, y)) room_near = true;
+				if (x < MAP_HEIGHT - 1) if (IsPassable(x + 1, y)) room_near = true;
+				if (y > 0) if (IsPassable(x, y - 1)) room_near = true;
+				if (y < MAP_WIDTH - 1) if (IsPassable(x, y + 1)) room_near = true;
+				if (room_near) SetWall(x, y);
 			}
 		}
 
 		// place wall corners
-		for (int i = 0; i < MAP_HEIGHT; i++) {
-			for (int j = 0; j < MAP_WIDTH; j++) {
-				bool room_near = false;
-				if (IsWallCorner(i,j)) room_near = true;
-				if (room_near) SetWallCorner(i,j);
+		for (int y = 0; y < MAP_HEIGHT; y++) {
+			for (int x = 0; x < MAP_WIDTH; x++) {
+				if (IsWallCorner(x, y)) SetWallCorner(x, y);
 			}
 		}
 	}
@@ -275,10 +274,18 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	public void GenerateDoors() {
 		/*for (int y = 0; y < MAP_HEIGHT; y++) {
 			for (int x = 0; x < MAP_WIDTH; x++) {
-				Tile tile = tiles[j, i];
-				print (tile.id);
+				Tile tile = tiles[x, y];
+				if (tile.id != TileType.CORRIDOR) continue;
 
-				//if ()
+				if (tile.id == TileType.CORRIDOR && x < MAP_WIDTH - 1 && tiles[x + 1, y].id == TileType.ROOM) {
+					print (tile.id + "->" + tiles[x + 1, y].id);
+					SetDoor(x + 1, y);
+				}
+
+				if (tile.id == TileType.CORRIDOR && x > 0 && tiles[x - 1, y].id == TileType.ROOM) {
+					print (tile.id + "->" + tiles[x - 1, y].id);
+					SetDoor(x - 1, y);
+				}
 			}
 		}*/
 	}
@@ -305,6 +312,11 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 						GameObject wall = createWall(container, row, col);
 						tiles[row,col].obj = wall; // record gameobject in tile
 					}
+					// doors
+					else if (id == TileType.DOOR) {
+						GameObject door = createDoor(container, row, col);
+						tiles[row,col].obj = door; // record gameobject in tile
+					}
 				}
 			}
 			container.transform.parent = containerRooms.transform;
@@ -317,7 +329,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	}
 
 
-	private GameObject createFloor (GameObject container, float row, float col) {
+	private GameObject createFloor (GameObject container, int row, int col) {
 		GameObject floor = GameObject.Instantiate(prefabFloor,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
 		floor.transform.parent = container.transform;
 		floor.transform.localScale = new Vector3(1, Random.Range(0.1f, 0.3f), 1);
@@ -326,11 +338,22 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		floor.transform.localScale = new Vector3(1, h, 1);
 		floor.transform.localPosition = new Vector3(col, 0, row); // h / 2
 
+
+
+		Tile tile = tiles[row, col];
+		GameObject cube = floor.transform.Find("Cube").gameObject;
+		if (tile.id == TileType.ROOM) {
+			cube.renderer.material.color = Color.red;
+		}
+		if (tile.id == TileType.CORRIDOR) {
+			cube.renderer.material.color = Color.cyan;
+		}
+
 		return floor;
 	}
 
 
-	private GameObject createWall (GameObject container, float row, float col) {
+	private GameObject createWall (GameObject container, int row, int col) {
 		GameObject wall = GameObject.Instantiate(prefabWall,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
 		wall.transform.parent = container.transform;
 
@@ -340,6 +363,19 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 
 		return wall;
+	}
+
+
+	private GameObject createDoor (GameObject container, float row, float col) {
+		GameObject door = GameObject.Instantiate(prefabDoor,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
+		door.transform.parent = container.transform;
+
+		float h = 0.8f;
+		door.transform.localScale = new Vector3(0.8f, h, 0.8f);
+		door.transform.localPosition = new Vector3(door.transform.position.x, 0, door.transform.position.z); // h / 2
+
+
+		return door;
 	}
 
 
@@ -391,6 +427,10 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		tiles[row,col].id = TileType.WALLCORNER;
 	}
 
+	public void SetDoor(int row, int col) {
+		tiles[row,col].id = TileType.DOOR;
+	}
+
 	// Dig a room, placing floor tiles
 	public void DigRoom(int row_bottom, int col_left, int row_top, int col_right) {
 		// Out of range
@@ -423,7 +463,9 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	}
 	
 	public void DigCorridor(int row, int col) {
-		 tiles[row,col].id = TileType.CORRIDOR;
+		if (tiles[row,col].id != TileType.ROOM) {
+			tiles[row,col].id = TileType.CORRIDOR;
+		}
 	}
 	
 	public void DigCorridor(XY p1, XY p2) {

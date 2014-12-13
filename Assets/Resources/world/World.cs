@@ -51,7 +51,7 @@ public class World : MonoBehaviour {
 			Debug.Log ("Dungeon Generation Started");
 			dungeon.GenerateDungeon(dungeon.seed);
 
-			dungeon.logGrid();
+			//dungeon.logGrid();
 
 			//locateCubesAtRandom();
 
