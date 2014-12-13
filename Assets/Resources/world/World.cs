@@ -155,27 +155,26 @@ public class World : MonoBehaviour {
 	}
 
 
+	private Vector3 pressPos;
 	public void onTouchPress (TouchEvent e) {
-		// Vector3 pos = e.activeTouch.getPos3d(Camera.main);
-		Transform obj = e.activeTouch.getObject3d(Camera.main);
-		if (!obj) return;
-
-		Tile tile = dungeon.getTileAtPos(obj.transform.position);
-		print(obj + " " + tile.id);
-
-
-		entity.moveTo(obj.transform.position);
-		//player.moveTo(new Vector3(obj.position.x, 0, obj.position.z));
-
-		// get tile at current path node
-		//Tile tile = dungeon.tiles[(int)path[0].y, (int)path[0].x];
-		//Vector3 pos = tile.obj.transform.position + Vector3.up * tile.obj.transform.lossyScale.y / 2;
-		//pos += Vector3.up * transform.lossyScale.y / 2;;
+		//print("press " + e.activeTouch.getPos3d(Camera.main));
+		pressPos = e.activeTouch.getPos3d(Camera.main);
 	}
 
 
 	public void onTouchRelease (TouchEvent e) {
 		//print("release " + e.activeTouch.getPos3d(Camera.main));
+
+		Vector3 pos = e.activeTouch.getPos3d(Camera.main);
+		if ((pressPos - pos).magnitude > 0.5f) return;
+
+		Transform obj = e.activeTouch.getObject3d(Camera.main);
+		if (!obj) return;
+
+		//Tile tile = dungeon.getTileAtPos(obj.transform.position);
+		//print(obj + " " + tile.id);
+
+		entity.moveTo(obj.transform.position);
 	}
 
 

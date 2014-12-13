@@ -13,6 +13,9 @@ public class Entity : MonoBehaviour {
 	private Sequence moveSequence;
 
 
+	private float speed = 0.25f;
+
+
 	public void init (World world, Transform parent, Vector3 pos, Vector3 rot) {
 		this.world = world;
 		this.body = transform.Find("Body");
@@ -21,18 +24,17 @@ public class Entity : MonoBehaviour {
 		transform.localPosition = pos;
 		transform.localEulerAngles = rot;
 
-		DOTween.defaultEaseType = Ease.Linear;
+		DOTween.defaultEaseType = Ease.InOutQuad;
 	}
 
 
 	public void moveTo (Vector3 goal) {
 		path = world.astar.SearchPath(transform.position, goal);
-		world.astar.PrintPath(path);
+		//world.astar.PrintPath(path);
 
 		if (path.Count == 0) {
 			return;
 		}
-
 
 		// Create move Sequence
 		moveSequence = DOTween.Sequence();
@@ -40,9 +42,13 @@ public class Entity : MonoBehaviour {
 			addStep(i);
 		}
 
-		// rotate ent and delay sequence by rotation time
-		moveSequence.PrependInterval(0.15f);
-		transform.DOLookAt(new Vector3(path[0].x, 0, path[0].y), 0.15f, AxisConstraint.Y);
+		// if enough angle diff, rotate ent and delay sequence by rotation time
+		Vector3 vec = new Vector3(path[0].x, 0, path[0].y) - transform.position;
+		float angle = Vector3.Angle(transform.forward, vec);
+		if (angle >= 45) {
+			moveSequence.PrependInterval(speed);
+			transform.DOLookAt(new Vector3(path[0].x, 0, path[0].y), speed, AxisConstraint.Y);
+		}
 	}
 
 
@@ -52,17 +58,17 @@ public class Entity : MonoBehaviour {
 		
 		// move
 		moveSequence.Append(
-			transform.DOLocalMove(pos, 0.3f)
+			transform.DOLocalMove(pos, speed)
 				.OnComplete(()=>endStep(i, pos))
 		);
 
 		// rotate
-		moveSequence.Join(transform.DOLookAt(pos, 0.15f, AxisConstraint.Y));
+		moveSequence.Join(transform.DOLookAt(pos, speed / 2, AxisConstraint.Y));
 	}
 
 
 	private void endStep (int i, Vector3 pos) {
-		print("step" + i + " -> " + pos);
+		//print("step" + i + " -> " + pos);
 
 		/*if (i < path.Count) {
 			Vector3 nextPos = path[i + 1];
