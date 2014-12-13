@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 //[System.Serializable]
 
@@ -10,17 +11,26 @@ public class Room {
 
 	public AABB boundary;
 	public QuadTree quadtree;
-	
 
-	public Room (AABB b) {
+	public List<Tile> tiles;
+	
+	public int id;
+
+	public Room (int id, AABB b) {
 		boundary = b;
+
+		this.id = id;
+		tiles = new List<Tile>();
 	}
 
 	
-	public Room (AABB b, QuadTree q) {
+	public Room (int id, AABB b, QuadTree q) {
 		boundary = b;
 		quadtree = q;
 		quadtree.room = this;
+
+		this.id = id;
+		tiles = new List<Tile>();
 	}
 	
 }

@@ -192,7 +192,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	public void GenerateRooms(ref List<Room> _rooms, QuadTree _quadTree) {
 		// Childless node
 		if (_quadTree.northWest == null && _quadTree.northEast == null && _quadTree.southWest == null && _quadTree.southEast == null) {
-			_rooms.Add(GenerateRoom(_quadTree));
+			_rooms.Add(GenerateRoom(_rooms.Count, _quadTree));
 			return;
 		}
 		
@@ -204,7 +204,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	}
 	
 	// Generate a single room
-	public Room GenerateRoom(QuadTree _quadTree) {
+	public Room GenerateRoom(int id, QuadTree _quadTree) {
 		// Center of the room
 		XY roomCenter = new XY();
 		roomCenter.x = Random.Range(ROOM_WALL_BORDER + _quadTree.boundary.Left() + ROOM_MIN_SIZE/2.0f, _quadTree.boundary.Right() - ROOM_MIN_SIZE/2.0f - ROOM_WALL_BORDER);
@@ -229,17 +229,20 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		// Eliminate ugly zones
 		if (ROOM_UGLY_ENABLED == false) {
 			float aspect_ratio = roomHalf.x / roomHalf.y;
-			if (aspect_ratio > ROOM_MAX_RATIO || aspect_ratio < 1.0f/ROOM_MAX_RATIO) return GenerateRoom(_quadTree); 
+			if (aspect_ratio > ROOM_MAX_RATIO || aspect_ratio < 1.0f/ROOM_MAX_RATIO) return GenerateRoom(id, _quadTree); 
 		}
 		
 		// Create AABB
 		AABB randomAABB = new AABB(roomCenter, roomHalf);
+
+		// create room
+		Room room = new Room(id, randomAABB, _quadTree);
 		
 		// Dig the room in our tilemap
-		DigRoom (randomAABB.BottomTile(), randomAABB.LeftTile(), randomAABB.TopTile()-1, randomAABB.RightTile()-1);
+		DigRoom (room, randomAABB.BottomTile(), randomAABB.LeftTile(), randomAABB.TopTile()-1, randomAABB.RightTile()-1);
 		
 		// Return the room
-		return new Room(randomAABB,_quadTree);
+		return room;
 	}
 	
 	void GenerateCorridors() {
@@ -374,7 +377,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 
 		// colored rooms and corridors (note that this will generate too many draw calls)
-		GameObject cube = floor.transform.Find("Cube").gameObject;
+		/*GameObject cube = floor.transform.Find("Cube").gameObject;
 		
 		Tile tile = tiles[row, col];
 		if (tile.id == TileType.ROOM) {
@@ -382,7 +385,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		}
 		if (tile.id == TileType.CORRIDOR) {
 			cube.renderer.material.color = Color.cyan;
-		}
+		}*/
 
 		return floor;
 	}
@@ -432,6 +435,23 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		print (str);
 	}
 
+
+	public void logRooms () {
+		print ("Rooms: " + rooms.Count);
+
+		for (int i = 0; i < rooms.Count; i++) {
+			Room room = rooms[i];
+			print ("    Room" + i + ": " + room.id);
+			Color color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+			for (int n = 0; n < room.tiles.Count; n++) {
+				//print ("        " + room.tiles[n]);
+				Tile tile = room.tiles[n];
+				GameObject cube = tile.obj.transform.Find("Cube").gameObject;
+				cube.renderer.material.color = color;
+			}
+		}
+	}
+
 	
 	// *************************************************************
 	// Helper Methods
@@ -463,21 +483,25 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		if (row < MAP_HEIGHT - 1  && col < MAP_HEIGHT - 1 && tiles[row + 1, col].id == TileType.WALL && tiles[row, col + 1].id == TileType.WALL && tiles[row + 1, col + 1].id != TileType.WALL) return true;
 		return false;
 	}
+
 	
 	public void SetWall(int row, int col) {
 		tiles[row,col].id = TileType.WALL;
 	}
 
+
 	public void SetWallCorner(int row, int col) {
 		tiles[row,col].id = TileType.WALLCORNER;
 	}
+
 
 	public void SetDoor(int row, int col) {
 		tiles[row,col].id = TileType.DOOR;
 	}
 
+
 	// Dig a room, placing floor tiles
-	public void DigRoom(int row_bottom, int col_left, int row_top, int col_right) {
+	public void DigRoom(Room room, int row_bottom, int col_left, int row_top, int col_right) {
 		// Out of range
 		if ( row_top < row_bottom ) {
 		    int tmp = row_top;
@@ -498,20 +522,28 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		if (col_left < 0) return;
 		
 		// Dig floor
+		//room.tiles = new List<Tile>();
 	    for (int row = row_bottom; row <= row_top; row++) 
 	        for (int col = col_left; col <= col_right; col++) 
-	            DigRoom (row,col);
+	            DigRoom (room, row,col);
 	}
 	
-	public void DigRoom(int row, int col) {
-		 tiles[row,col].id = TileType.ROOM;
+
+	public void DigRoom(Room room, int row, int col) {
+		Tile tile = tiles[row,col];
+		tile.id = TileType.ROOM;
+		tile.room = room;
+
+		room.tiles.Add(tile);
 	}
+
 	
 	public void DigCorridor(int row, int col) {
 		if (tiles[row,col].id != TileType.ROOM) {
 			tiles[row,col].id = TileType.CORRIDOR;
 		}
 	}
+
 	
 	public void DigCorridor(XY p1, XY p2) {
 		int row1 = Mathf.RoundToInt(p1.y);
@@ -521,6 +553,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		
 		DigCorridor(row1,col1,row2,col2);
 	}
+
 	
 	public void DigCorridor(int row1, int col1, int row2, int col2) {		
 		if (row1 <= row2) {

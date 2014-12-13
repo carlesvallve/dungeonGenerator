@@ -19,6 +19,8 @@ public class Tile {
 	public TileType id;
 	public GameObject obj;
 
+	public Room room;
+
 
 	public Tile ( TileType id ) {
 		this.id = id;
