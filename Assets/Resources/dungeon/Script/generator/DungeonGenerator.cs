@@ -69,9 +69,11 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	public override void Init() {
 		// Initialize the tilemap
 		tiles = new Tile[MAP_HEIGHT,MAP_WIDTH];
-		for (int i = 0; i < MAP_HEIGHT; i++) 
-			for (int j = 0; j < MAP_WIDTH; j++) 
-				tiles[i,j] = new Tile(Tile.TILE_EMPTY);
+		for (int i = 0; i < MAP_HEIGHT; i++) {
+			for (int j = 0; j < MAP_WIDTH; j++) {
+				tiles[i,j] = new Tile(TileType.EMPTY);
+			}
+		}
 		
 		// Init QuadTree
 		quadTree = new QuadTree(new AABB(new XY(MAP_WIDTH/2.0f,MAP_HEIGHT/2.0f),new XY(MAP_WIDTH/2.0f, MAP_HEIGHT/2.0f)));
@@ -90,7 +92,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		// Reset tilemap
 		for (int i = 0; i < MAP_HEIGHT; i++) 
 			for (int j = 0; j < MAP_WIDTH; j++) 
-				tiles[i,j] = new Tile(Tile.TILE_EMPTY);
+				tiles[i,j] = new Tile(TileType.EMPTY);
 		
 		// Reset QuadTree
 		quadTree = new QuadTree(new AABB(new XY(MAP_WIDTH/2.0f,MAP_HEIGHT/2.0f),new XY(MAP_WIDTH/2.0f, MAP_HEIGHT/2.0f)));
@@ -292,14 +294,14 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 			GameObject container = GameObject.Instantiate(meshCombiner) as GameObject;
 			for (int row = _quadtree.boundary.BottomTile(); row <= _quadtree.boundary.TopTile()-1; row++) {
 				for (int col = _quadtree.boundary.LeftTile(); col <= _quadtree.boundary.RightTile()-1; col++) {
-					int id = tiles[row,col].id;
+					TileType id = tiles[row,col].id;
 					// floors
-					if (id == Tile.TILE_ROOM || id == Tile.TILE_CORRIDOR) {
+					if (id == TileType.ROOM || id == TileType.CORRIDOR) {
 						GameObject floor = createFloor(container, row, col);
 						tiles[row,col].obj = floor; // record gameobject in tile
 					}
 					// walls
-					else if (id == Tile.TILE_WALL || id == Tile.TILE_WALLCORNER) {
+					else if (id == TileType.WALL || id == TileType.WALLCORNER) {
 						GameObject wall = createWall(container, row, col);
 						tiles[row,col].obj = wall; // record gameobject in tile
 					}
@@ -325,7 +327,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		//if (prob <= 40) h += Random.Range(0f, 0.15f);
 
 		floor.transform.localScale = new Vector3(1, h, 1);
-		floor.transform.localPosition = new Vector3(col, h / 2, row);
+		floor.transform.localPosition = new Vector3(col, 0, row); // h / 2
 
 		return floor;
 	}
@@ -342,7 +344,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		//if (prob <= 2) h += Random.Range(0f, 1.0f);
 
 		wall.transform.localScale = new Vector3(1, h, 1);
-		wall.transform.localPosition = new Vector3(wall.transform.position.x, h / 2, wall.transform.position.z);
+		wall.transform.localPosition = new Vector3(wall.transform.position.x, 0, wall.transform.position.z); // h / 2
 
 		// TODO: This gives us too many draw calls, need to figure a way to optimise it...
 		//wall.renderer.material.SetTextureScale("_MainTex", new Vector2(wall.transform.lossyScale.x / 3.0f, wall.transform.lossyScale.y / 3.0f));
@@ -351,32 +353,38 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		return wall;
 	}
 
+
+	// *************************************************************
+	// Walkability grid
+	// *************************************************************
+
+
 	
 	// *************************************************************
 	// Helper Methods
 	// *************************************************************
 
-	public bool IsEmpty(int row, int col) { return tiles[row,col].id == Tile.TILE_EMPTY; }
+	public bool IsEmpty(int row, int col) { return tiles[row,col].id == TileType.EMPTY; }
 	
-	public bool IsPassable(int row, int col) { return tiles[row,col].id == Tile.TILE_ROOM || tiles[row,col].id == Tile.TILE_CORRIDOR; }
+	public bool IsPassable(int row, int col) { return tiles[row,col].id == TileType.ROOM || tiles[row,col].id == TileType.CORRIDOR; }
 	
 	public bool IsPassable(XY xy) { return IsPassable((int) xy.y, (int) xy.x);}
 
 	public bool IsWallCorner(int row, int col) { 
-		if (tiles[row, col].id != Tile.TILE_EMPTY) return false;
-		if (row > 0  && col > 0 && tiles[row - 1, col].id == Tile.TILE_WALL && tiles[row, col - 1].id == Tile.TILE_WALL && tiles[row - 1, col - 1].id != Tile.TILE_WALL) return true;
-		if (row > 0  && col < MAP_HEIGHT - 1 && tiles[row - 1, col].id == Tile.TILE_WALL && tiles[row, col + 1].id == Tile.TILE_WALL && tiles[row - 1, col + 1].id != Tile.TILE_WALL) return true;
-		if (row < MAP_HEIGHT - 1  && col > 0 && tiles[row + 1, col].id == Tile.TILE_WALL && tiles[row, col - 1].id == Tile.TILE_WALL && tiles[row + 1, col - 1].id != Tile.TILE_WALL) return true;
-		if (row < MAP_HEIGHT - 1  && col < MAP_HEIGHT - 1 && tiles[row + 1, col].id == Tile.TILE_WALL && tiles[row, col + 1].id == Tile.TILE_WALL && tiles[row + 1, col + 1].id != Tile.TILE_WALL) return true;
+		if (tiles[row, col].id != TileType.EMPTY) return false;
+		if (row > 0  && col > 0 && tiles[row - 1, col].id == TileType.WALL && tiles[row, col - 1].id == TileType.WALL && tiles[row - 1, col - 1].id != TileType.WALL) return true;
+		if (row > 0  && col < MAP_HEIGHT - 1 && tiles[row - 1, col].id == TileType.WALL && tiles[row, col + 1].id == TileType.WALL && tiles[row - 1, col + 1].id != TileType.WALL) return true;
+		if (row < MAP_HEIGHT - 1  && col > 0 && tiles[row + 1, col].id == TileType.WALL && tiles[row, col - 1].id == TileType.WALL && tiles[row + 1, col - 1].id != TileType.WALL) return true;
+		if (row < MAP_HEIGHT - 1  && col < MAP_HEIGHT - 1 && tiles[row + 1, col].id == TileType.WALL && tiles[row, col + 1].id == TileType.WALL && tiles[row + 1, col + 1].id != TileType.WALL) return true;
 		return false;
 	}
 	
 	public void SetWall(int row, int col) {
-		tiles[row,col].id = Tile.TILE_WALL;
+		tiles[row,col].id = TileType.WALL;
 	}
 
 	public void SetWallCorner(int row, int col) {
-		tiles[row,col].id = Tile.TILE_WALLCORNER;
+		tiles[row,col].id = TileType.WALLCORNER;
 	}
 
 	// Dig a room, placing floor tiles
@@ -407,11 +415,11 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	}
 	
 	public void DigRoom(int row, int col) {
-		 tiles[row,col].id = Tile.TILE_ROOM;
+		 tiles[row,col].id = TileType.ROOM;
 	}
 	
 	public void DigCorridor(int row, int col) {
-		 tiles[row,col].id = Tile.TILE_CORRIDOR;
+		 tiles[row,col].id = TileType.CORRIDOR;
 	}
 	
 	public void DigCorridor(XY p1, XY p2) {
@@ -466,16 +474,16 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 		for (int i = 0; i < MAP_WIDTH; i++) for (int j = 0; j < MAP_HEIGHT; j++) {
 			switch (tiles[j,i].id) {
-			case Tile.TILE_EMPTY:
+			case TileType.EMPTY:
 				t.SetPixel(i,j,Color.black);
 				break;
-			case Tile.TILE_ROOM:
+			case TileType.ROOM:
 				t.SetPixel(i,j,Color.white);
 				break;
-			case Tile.TILE_CORRIDOR:
+			case TileType.CORRIDOR:
 				t.SetPixel(i,j,Color.grey);
 				break;
-			case Tile.TILE_WALL:
+			case TileType.WALL:
 				t.SetPixel(i,j,Color.blue);
 				break;
 			}

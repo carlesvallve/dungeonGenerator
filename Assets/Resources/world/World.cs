@@ -53,7 +53,7 @@ public class World : MonoBehaviour {
 
 			//locateCubesAtRandom();
 
-			entity = createEntity(new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0.6f, Random.Range(0, dungeon.MAP_HEIGHT)));
+			entity = createEntity(new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0, Random.Range(0, dungeon.MAP_HEIGHT)));
 
 			cam.target = entity.transform;
 			
@@ -81,8 +81,8 @@ public class World : MonoBehaviour {
 
 
 	private void locateCubesAtRandom () {
-		cube1.transform.position = new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0.6f, Random.Range(0, dungeon.MAP_HEIGHT));
-		cube2.transform.position = new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0.6f, Random.Range(0, dungeon.MAP_HEIGHT));
+		cube1.transform.position = new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0.5f, Random.Range(0, dungeon.MAP_HEIGHT));
+		cube2.transform.position = new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0.5f, Random.Range(0, dungeon.MAP_HEIGHT));
 	}
 
 
