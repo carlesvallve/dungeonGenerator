@@ -161,7 +161,7 @@ public class World : MonoBehaviour {
 		if (!obj) return;
 
 		Tile tile = dungeon.getTileAtPos(obj.transform.position);
-		print(obj + " " + tile);
+		print(obj + " " + tile.id);
 
 
 		entity.moveTo(obj.transform.position);

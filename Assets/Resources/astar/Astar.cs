@@ -17,7 +17,7 @@ using System.Collections.Generic;
 
 public class Astar {
     //Declare constants
-    bool cutAcrossCorners = false; //activates-deactivates cut acroos corners functionallity
+    bool cutAcrossCorners = true; //activates-deactivates cut acroos corners functionallity
     int mapWidth, mapHeight;
     int onClosedList = 10;
     const int notfinished = 0, notStarted = 0, found = 1, nonexistent = 2; // path-related constants
@@ -81,6 +81,12 @@ public class Astar {
         int[] mypath = FindPath(startingX, startingY, targetX, targetY);
         //convert path to Vector2-list
         List<Vector2> pathlist = ConvertPath(mypath);
+
+        // pop first path item
+        if (pathlist.Count > 0) { 
+            pathlist.RemoveAt(0); 
+        }
+
         //return path
         return pathlist;
     }

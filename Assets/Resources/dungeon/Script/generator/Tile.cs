@@ -35,6 +35,8 @@ public class Tile {
 			return true;
 		case TileType.CORRIDOR:
 			return true;
+		case TileType.DOOR:
+			return true;
 		default:
 			return false;
 		}
