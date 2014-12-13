@@ -52,14 +52,12 @@ public class World : MonoBehaviour {
 			dungeon.GenerateDungeon(dungeon.seed);
 
 			//dungeon.logGrid();
-			dungeon.logRooms();
-
-
-			//locateCubesAtRandom();
+			//dungeon.logRooms();
 
 			entity = createEntity(new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0, Random.Range(0, dungeon.MAP_HEIGHT)));
-
 			cam.target = entity.transform;
+
+			// locateCubesAtRandom();
 			
 			// initialize grid
 			//initGrid();

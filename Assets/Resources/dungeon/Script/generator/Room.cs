@@ -15,12 +15,14 @@ public class Room {
 	public List<Tile> tiles;
 	
 	public int id;
+	public Color color = Color.white;
 
 	public Room (int id, AABB b) {
 		boundary = b;
 
 		this.id = id;
-		tiles = new List<Tile>();
+		this.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+		this.tiles = new List<Tile>();
 	}
 
 	
@@ -30,7 +32,8 @@ public class Room {
 		quadtree.room = this;
 
 		this.id = id;
-		tiles = new List<Tile>();
+		this.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+		this.tiles = new List<Tile>();
 	}
 	
 }

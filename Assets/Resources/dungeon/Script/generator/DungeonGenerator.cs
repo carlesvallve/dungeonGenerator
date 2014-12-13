@@ -340,12 +340,13 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 				for (int col = _quadtree.boundary.LeftTile(); col <= _quadtree.boundary.RightTile()-1; col++) {
 					TileType id = tiles[row,col].id;
 					// floors
-					if (id == TileType.ROOM || id == TileType.CORRIDOR || id == TileType.DOOR) {
+					if (id != TileType.EMPTY) {
+					//if (id == TileType.ROOM || id == TileType.CORRIDOR || id == TileType.DOOR) {
 						GameObject floor = createFloor(container, row, col);
 						tiles[row,col].obj = floor; // record gameobject in tile
 					}
 					// walls
-					else if (id == TileType.WALL || id == TileType.WALLCORNER) {
+					if (id == TileType.WALL || id == TileType.WALLCORNER) {
 						GameObject wall = createWall(container, row, col);
 						tiles[row,col].obj = wall; // record gameobject in tile
 					}
@@ -375,6 +376,11 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		floor.transform.localScale = new Vector3(1, h, 1);
 		floor.transform.localPosition = new Vector3(col, 0, row); // h / 2
 
+		Tile tile = tiles[row, col];
+		if (tile.color != Color.white) {
+			GameObject cube = floor.transform.Find("Cube").gameObject;
+			cube.renderer.material.color = tile.color;
+		}
 
 		// colored rooms and corridors (note that this will generate too many draw calls)
 		/*GameObject cube = floor.transform.Find("Cube").gameObject;
@@ -399,6 +405,12 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		wall.transform.localScale = new Vector3(1, h, 1);
 		wall.transform.localPosition = new Vector3(wall.transform.position.x, 0, wall.transform.position.z); // h / 2
 
+		Tile tile = tiles[row, col];
+		if (tile.color != Color.white) {
+			GameObject cube = wall.transform.Find("Cube").gameObject;
+			cube.renderer.material.color = tile.color;
+		}
+
 		return wall;
 	}
 
@@ -406,6 +418,8 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	private GameObject createDoor (GameObject container, float row, float col) {
 		GameObject door = GameObject.Instantiate(prefabDoor,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
 		door.transform.parent = container.transform;
+
+
 
 		float h = 1f;
 		door.transform.localScale = new Vector3(0.9f, h, 0.9f);
@@ -441,14 +455,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 		for (int i = 0; i < rooms.Count; i++) {
 			Room room = rooms[i];
-			print ("    Room" + i + ": " + room.id);
-			Color color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-			for (int n = 0; n < room.tiles.Count; n++) {
-				//print ("        " + room.tiles[n]);
-				Tile tile = room.tiles[n];
-				GameObject cube = tile.obj.transform.Find("Cube").gameObject;
-				cube.renderer.material.color = color;
-			}
+			print ("    Room" + room.id +  " (" + room.tiles.Count + " tiles)");
 		}
 	}
 
@@ -533,6 +540,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		Tile tile = tiles[row,col];
 		tile.id = TileType.ROOM;
 		tile.room = room;
+		tile.color = room.color;
 
 		room.tiles.Add(tile);
 	}

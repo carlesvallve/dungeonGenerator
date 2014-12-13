@@ -21,6 +21,8 @@ public class Tile {
 
 	public Room room;
 
+	public Color color = Color.white;
+
 
 	public Tile ( TileType id ) {
 		this.id = id;
