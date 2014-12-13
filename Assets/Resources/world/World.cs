@@ -54,7 +54,12 @@ public class World : MonoBehaviour {
 			//dungeon.logGrid();
 			//dungeon.logRooms();
 
+			if (entity) {
+				Destroy(entity.gameObject);
+			}
+
 			entity = createEntity(new Vector3(Random.Range(0, dungeon.MAP_WIDTH), 0, Random.Range(0, dungeon.MAP_HEIGHT)));
+			entity.transform.localPosition = dungeon.getRandomPosInDungeon();
 			cam.target = entity.transform;
 
 			// locateCubesAtRandom();

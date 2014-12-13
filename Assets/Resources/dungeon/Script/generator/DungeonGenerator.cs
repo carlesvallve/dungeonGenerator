@@ -374,7 +374,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 		float h = 0.01f;
 		floor.transform.localScale = new Vector3(1, h, 1);
-		floor.transform.localPosition = new Vector3(col, 0, row); // h / 2
+		floor.transform.localPosition = new Vector3(row, 0, col); // h / 2
 
 		Tile tile = tiles[row, col];
 		if (tile.color != Color.white) {
@@ -398,7 +398,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 
 	private GameObject createWall (GameObject container, int row, int col) {
-		GameObject wall = GameObject.Instantiate(prefabWall,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
+		GameObject wall = GameObject.Instantiate(prefabWall,new Vector3(row, 0.0f, col),Quaternion.identity) as GameObject;
 		wall.transform.parent = container.transform;
 
 		float h = 1.0f;
@@ -416,7 +416,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 
 	private GameObject createDoor (GameObject container, float row, float col) {
-		GameObject door = GameObject.Instantiate(prefabDoor,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
+		GameObject door = GameObject.Instantiate(prefabDoor,new Vector3(row, 0.0f, col),Quaternion.identity) as GameObject;
 		door.transform.parent = container.transform;
 
 
@@ -472,8 +472,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	public bool IsPassable(int row, int col) { 
 		return 
 			tiles[row,col].id == TileType.ROOM || 
-			tiles[row,col].id == TileType.CORRIDOR ||
-			tiles[row,col].id == TileType.DOOR; 
+			tiles[row,col].id == TileType.CORRIDOR;
 	}
 
 	
@@ -630,6 +629,26 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		FileStream myFile = new FileStream(Application.dataPath + "/Resources/Generated/" + filename + ".png",FileMode.OpenOrCreate,System.IO.FileAccess.ReadWrite);
 		myFile.Write(bytes,0,bytes.Length);
 		myFile.Close();
+	}
+
+
+	// *************************************************************
+	// More Helper Methods
+	// *************************************************************
+
+	public Vector3 getRandomPosInDungeon () {
+		bool ok = false;
+		int x = 0;
+		int y = 0;
+		while (!ok) {
+			x = Random.Range(1, MAP_WIDTH - 1);
+			y = Random.Range(1, MAP_HEIGHT - 1);
+
+			Tile tile = tiles[x, y];
+			ok = IsPassable(x, y);
+		}
+
+		return new Vector3(x, 0, y);
 	}
 	
 }
