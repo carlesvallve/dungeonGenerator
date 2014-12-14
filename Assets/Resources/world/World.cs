@@ -55,7 +55,7 @@ public class World : MonoBehaviour {
 			Random.seed = dungeon.seed;
 			
 			// Generate Dungeon
-			Debug.Log ("Dungeon Generation Started");
+			Debug.Log ("Dungeon Generation Started with seed " + dungeon.seed);
 			dungeon.GenerateDungeon(dungeon.seed);
 
 			astar = new Astar(dungeon.tiles);

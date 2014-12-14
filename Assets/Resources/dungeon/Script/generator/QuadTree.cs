@@ -246,7 +246,6 @@ public class QuadTree {
 	// Start our QuadTree algorithm
 	public void GenerateQuadTree(int s) {
 		seed = s;
-		Debug.Log("Generating QuadTree with seed " + seed);
 		GenerateZones(1,dungeon.MAX_DEPTH);
 	}
 	
