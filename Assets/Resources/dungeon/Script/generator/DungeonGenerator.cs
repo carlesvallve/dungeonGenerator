@@ -5,7 +5,6 @@ using System.IO;
 
 /*
 TODO:
-- Better way of coloring tiles, we have waaay too many drawcalls colorig them individually
 - FOV visibility system
 - stairs and diferent height levels 
 - start and end spots that allow us to navigate through dungeon levels

@@ -3,6 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 
+/*
+TODO:
+- Interact with doors
+
+- Attack action and animation
+- Defend action and animation
+- Impact action and animation
+*/
+
 
 public class Entity : MonoBehaviour {
 
@@ -191,13 +200,7 @@ public class Entity : MonoBehaviour {
 
 		float t = speed * 0.5f;
 
-		DOTween.Sequence()//.SetEase(Ease.InOutQuad)
-			/*.Append(legR.DOLocalRotate(new Vector3(0, 0, 0), t))
-			.Join(legL.DOLocalRotate(new Vector3(0, 0, 0), t))
-			.Join(armR.DOLocalRotate(new Vector3(-20, 0, 0), t))
-			.Join(armL.DOLocalRotate(new Vector3(-20, 0, 0), t))
-			.Join(torax.DOLocalRotate(new Vector3(0, 0, 0), t))
-			.Join(head.DOLocalRotate(new Vector3(0, 0, 0), t));*/
+		DOTween.Sequence() //.SetEase(Ease.InOutQuad)
 			// rotate
 			.Append(legR.DOLocalRotate(new Vector3(45 * d, 0, 0), t))
 			.Join(legL.DOLocalRotate(new Vector3(-45 * d, 0, 0), t))
