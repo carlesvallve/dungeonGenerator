@@ -5,21 +5,11 @@ using System.IO;
 
 /*
 TODO:
-- walls on corners -> OK!
-- light on avatar -> OK!
-- grid and mouse interaction -> OK
-- astar pathfinding -> OK
-
-- doors on room entrances -> OK
-- rooms data -> OK
-- quadtree zones data -> OK
-
 - FOV visibility system
-- lights on rooms
-
 - stairs and diferent height levels 
-- start and end spots that lead to new levels
+- start and end spots that allow us to navigate through dungeon levels
 */
+
 
 // DungeonGenerator class. Singleton.
 public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
@@ -42,6 +32,9 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 	// Corridor Generation Parameters
 	public int CORRIDOR_WIDTH = 2;
+
+	// Colored quadtree zones
+	public bool coloredZones = false;
 	
 	// Tilemap
 	public Tile[,] tiles;
@@ -69,7 +62,11 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	private bool debugToTexture = false; // in case we want to export textures to illustrate our process
 	private Texture2D dungeonTexture;
 	
-	// On Awake
+
+	// *************************************************************
+	// Dungeon Initialization
+	// *************************************************************
+
 	public override void Init() {
 		// Initialize the tilemap
 		tiles = new Tile[MAP_HEIGHT,MAP_WIDTH];
@@ -80,11 +77,10 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		}
 		
 		// Init QuadTree
-		quadTree = new QuadTree(new AABB(new XY(MAP_WIDTH/2.0f,MAP_HEIGHT/2.0f),new XY(MAP_WIDTH/2.0f, MAP_HEIGHT/2.0f)));
+		quadTree = new QuadTree(new AABB(new XY(MAP_WIDTH/2.0f,  MAP_HEIGHT/2.0f), new XY(MAP_WIDTH/2.0f, MAP_HEIGHT/2.0f)));
 
 		// List of rooms
 		rooms = new List<Room>();
-		
 	}
 	
 	
@@ -97,52 +93,51 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		
 		// Reset QuadTree
 		quadTree = new QuadTree(new AABB(new XY(MAP_WIDTH/2.0f,MAP_HEIGHT/2.0f),new XY(MAP_WIDTH/2.0f, MAP_HEIGHT/2.0f)));
-		
+
 		// Reset rooms
 		rooms.Clear();
 		
 		// Destroy tile GameObjects
 		foreach (Transform t in containerRooms.transform) GameObject.Destroy(t.gameObject);
 	}
+
 	
 	// Generate a new dungeon with the given seed
 	public void GenerateDungeon(int seed) {
-		Debug.Log ("Generating QuadTree");
-			
 		// Clean
 		ResetDungeon ();
 		
 		// Place a temporary floor to see progress
 		if (debugToTexture) {
-			floor = GameObject.Instantiate(prefabDebug,new Vector3(-0.5f + MAP_WIDTH/2, 1, -0.5f + MAP_HEIGHT/2), Quaternion.identity) as GameObject;
-			floor.transform.localScale = new Vector3(1 + MAP_WIDTH, 1, 1 + MAP_HEIGHT);
+			floor = GameObject.Instantiate(prefabDebug,new Vector3(-0.5f + MAP_WIDTH/2, -0.1f, -0.5f + MAP_HEIGHT/2), Quaternion.identity) as GameObject;
+			floor.transform.localScale = new Vector3(1 + MAP_WIDTH, 0.1f, 1 + MAP_HEIGHT);
 		}
 				
 		// Generate QuadTree
+		Debug.Log ("Generating QuadTree");
 		zones = new List<QuadTree>();
 		GenerateQuadTree (ref quadTree);
 		
-		// Export texture
+		// Export quadtree texture
 		Texture2D quadTreeTexture = quadTree.QuadTreeToTexture();
 		if (debugToTexture) { floor.renderer.material.mainTexture = quadTree.QuadTreeToTexture(); }
 		TextureToFile(quadTreeTexture,seed + "_quadTree");
 
-		Debug.Log ("Generating Rooms");
-		
+	
 		// Generate Rooms
+		Debug.Log ("Generating Rooms");
 		GenerateRooms (ref rooms, quadTree);
 		
-		// Export texture
+		// Export rooms texture
 		dungeonTexture = DungeonToTexture();
 		if (debugToTexture) { floor.renderer.material.mainTexture = dungeonTexture; }
 		TextureToFile(dungeonTexture,seed + "_rooms");
 		
-		Debug.Log ("Generating Corridors");
-		
 		// Generate Corridors
+		Debug.Log ("Generating Corridors");
 		GenerateCorridors ();
 		
-		// Export texture
+		// Export corridors texture
 		if (debugToTexture) {
 			dungeonTexture = DungeonToTexture();
 			floor.renderer.material.mainTexture = dungeonTexture;
@@ -150,12 +145,13 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		}
 		
 		Debug.Log ("Generating Walls");
-		
 		GenerateWalls();
 
 		Debug.Log ("Generating Doors");
-		
 		GenerateDoors();
+
+		Debug.Log ("Fixing walls on map borders");
+		GenerateWallsOnMapBorders();
 		
 		// Export texture
 		if (debugToTexture) {
@@ -164,9 +160,8 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 			TextureToFile(dungeonTexture,seed + "_walls");
 		}
 		
-		Debug.Log ("Generating GameObjects, this may take a while..");
-		
 		// Instantiate prefabs
+		Debug.Log ("Generating GameObjects, this may take a while...");
 		GenerateGameObjects(quadTree);
 	}
 
@@ -250,6 +245,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 			for (int x = 0; x < MAP_WIDTH; x++) {
 				bool room_near = false;
 				if (IsPassable(x,y)) continue;
+
 				if (x > 0) if (IsPassable(x - 1, y)) room_near = true;
 				if (x < MAP_HEIGHT - 1) if (IsPassable(x + 1, y)) room_near = true;
 				if (y > 0) if (IsPassable(x, y - 1)) room_near = true;
@@ -267,8 +263,27 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	}
 
 
+	public void GenerateWallsOnMapBorders () {
+		// Place walls in case rooms ended up open as a result of ROOM_WALL_BORDER = 0
+		for (int y = 0; y < MAP_HEIGHT; y++) {
+			for (int x = 0; x < MAP_WIDTH; x++) {
+				if (x == 0 || y == 0 || x == MAP_WIDTH - 1 || y == MAP_HEIGHT - 1) {
+					Tile tile = tiles[x, y];
+					if (!tile.isEmpty()) {
+						SetWall(x, y);
+						if (x == 0 && tiles[x + 1, y].isWall()) SetWallCorner(x, y);
+						if (y == 0 && tiles[x, y + 1].isWall()) SetWallCorner(x, y);
+						if (x == MAP_WIDTH - 1 && tiles[x - 1, y].isWall()) SetWallCorner(x, y);
+						if (y == MAP_HEIGHT - 1 && tiles[x, y - 1].isWall()) SetWallCorner(x, y);
+					}
+				}
+			}
+		}
+	}
+
+
 	public void GenerateDoors() {
-		// generate doors
+		// Place doors
 		for (int y = 1; y < MAP_HEIGHT - 1; y++) {
 			for (int x = 1; x < MAP_WIDTH - 1; x++) {
 				Tile tile = tiles[x, y];
@@ -330,41 +345,37 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		// If it's an end quadtree, read every pos and make a chunk of combined meshes
 		if (_quadtree.HasChildren() == false) {
 
-			//quadtreeId += 1;
 			_quadtree.id = zones.Count;
 			zones.Add(_quadtree);
 			
 			GameObject container = GameObject.Instantiate(meshCombiner) as GameObject;
 			container.transform.parent = containerRooms.transform;
 			container.name = "Zone" + _quadtree.id;
-			//Color color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
 
 			for (int row = _quadtree.boundary.BottomTile(); row <= _quadtree.boundary.TopTile()-1; row++) {
 				for (int col = _quadtree.boundary.LeftTile(); col <= _quadtree.boundary.RightTile()-1; col++) {
 					// get tile and add it to quadtree zone
 					Tile tile = tiles[row,col];
+					tile.color = _quadtree.color;
 					_quadtree.tiles.Add(tile);
 
 					// set tile color to quadtree's zone color
 					if (tile.id == TileType.ROOM || tile.id == TileType.CORRIDOR) {
-						tile.color = _quadtree.color;
-					}
-
-					// create floors
-					if (tile.id != TileType.EMPTY) {
 						GameObject floor = createFloor(container, row, col);
-						tiles[row,col].obj = floor; // record gameobject in tile
+						tiles[row,col].obj = floor;
 					}
 
 					// create walls
 					if (tile.id == TileType.WALL || tile.id == TileType.WALLCORNER) {
 						GameObject wall = createWall(container, row, col);
-						tiles[row,col].obj = wall; // record gameobject in tile
+						createFloorUnderWall(container, wall, row, col);
+						tiles[row,col].obj = wall;
 					}
 					// create doors
 					if (tile.id == TileType.DOOR) {
+						createFloor(container, row, col);
 						GameObject door = createDoor(container, row, col);
-						tiles[row,col].obj = door; // record gameobject in tile
+						tiles[row,col].obj = door;
 					}
 				}
 			}
@@ -378,99 +389,159 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	}
 
 
-	private GameObject createFloor (GameObject container, int row, int col) {
-		GameObject floor = GameObject.Instantiate(prefabFloor,new Vector3(col, 0.0f, row),Quaternion.identity) as GameObject;
+	private GameObject createFloor (GameObject container, int x, int y) {
+		GameObject floor = GameObject.Instantiate(prefabFloor,new Vector3(x, 0.0f, y),Quaternion.identity) as GameObject;
 		floor.transform.parent = container.transform;
-		floor.transform.localScale = new Vector3(1, Random.Range(0.1f, 0.3f), 1);
 
 		float h = 0.01f;
 		floor.transform.localScale = new Vector3(1, h, 1);
-		floor.transform.localPosition = new Vector3(row, 0, col); // h / 2
+		floor.transform.localPosition = new Vector3(x, 0, y); // h / 2
 
-		Tile tile = tiles[row, col];
-		if (tile.color != Color.white) {
-			GameObject cube = floor.transform.Find("Cube").gameObject;
-			cube.renderer.material.color = tile.color;
+		// color floor
+		if (coloredZones) {
+			Tile tile = tiles[x, y];
+			if (tile.color != Color.white) {
+				GameObject cube = floor.transform.Find("Cube").gameObject;
+				cube.renderer.material.color = tile.color;
+			}
 		}
-
-		// colored rooms and corridors (note that this will generate too many draw calls)
-		/*GameObject cube = floor.transform.Find("Cube").gameObject;
 		
-		Tile tile = tiles[row, col];
-		if (tile.id == TileType.ROOM) {
-			cube.renderer.material.color = Color.red;
-		}
-		if (tile.id == TileType.CORRIDOR) {
-			cube.renderer.material.color = Color.cyan;
-		}*/
 
 		return floor;
 	}
 
 
-	private GameObject createWall (GameObject container, int row, int col) {
-		GameObject wall = GameObject.Instantiate(prefabWall,new Vector3(row, 0.0f, col),Quaternion.identity) as GameObject;
+	private GameObject createFloorUnderWall (GameObject container, GameObject wall, int x, int y) {
+		GameObject floor = GameObject.Instantiate(prefabFloor,new Vector3(x, 0.0f, y),Quaternion.identity) as GameObject;
+		floor.transform.parent = container.transform;
+
+		float h = 0.01f;
+		floor.transform.localScale = new Vector3(1, h, 1);
+		floor.transform.localPosition = new Vector3(x, 0, y); // h / 2
+
+		// color floor under wall
+		if (coloredZones) {
+			Tile tile = tiles[x, y];
+			if (tile.color != Color.white) {
+				GameObject cube = floor.transform.Find("Cube").gameObject;
+				cube.renderer.material.color = tile.color;
+			}
+		}
+
+		// adapt floor under wall to direction x
+		if (wall.transform.localScale.x < 1) {
+			if (x > 0 && !tiles[x - 1, y].isWall() 
+				&& x < MAP_WIDTH - 1 && tiles[x + 1, y].isEmpty()) {
+				floor.transform.localScale = new Vector3(0.7f, h, 1);
+				floor.transform.Translate(-0.15f, 0, 0);
+			}
+			if (x > 0 && tiles[x - 1, y].isEmpty() && x < MAP_WIDTH - 1 && !tiles[x + 1, y].isWall()) {
+				floor.transform.localScale = new Vector3(0.7f, h, 1);
+				floor.transform.Translate(0.15f, 0, 0);
+			}
+
+			if (x == 0) {
+				floor.transform.localScale = new Vector3(0.7f, h, 1);
+				floor.transform.Translate(0.15f, 0, 0);
+			}
+
+			if (x == MAP_WIDTH - 1) {
+				floor.transform.localScale = new Vector3(0.7f, h, 1);
+				floor.transform.Translate(-0.15f, 0, 0);
+			}
+		}
+
+		// adapt floor under wall to direction y
+		if (wall.transform.localScale.z < 1) {
+			if (y > 0 && !tiles[x, y - 1].isWall() && y < MAP_HEIGHT - 1 && tiles[x, y + 1].isEmpty()) {
+				floor.transform.localScale = new Vector3(1, h, 0.7f);
+				floor.transform.Translate(0, 0, -0.15f);
+			}
+			if (y > 0 && tiles[x, y - 1].isEmpty() && y < MAP_HEIGHT - 1 && !tiles[x, y + 1].isWall()) {
+				floor.transform.localScale = new Vector3(1, h, 0.7f);
+				floor.transform.Translate(0, 0, 0.15f);
+			}
+
+			if (y == 0) {
+				floor.transform.localScale = new Vector3(1, h, 0.7f);
+				floor.transform.Translate(0, 0, 0.15f);
+			}
+
+			if (y == MAP_HEIGHT - 1) {
+				floor.transform.localScale = new Vector3(1, h, 0.7f);
+				floor.transform.Translate(0, 0, -0.15f);
+			}
+		}
+
+		return floor;
+	}
+
+
+	private GameObject createWall (GameObject container, int x, int y) {
+		GameObject wall = GameObject.Instantiate(prefabWall,new Vector3(x, 0.0f, y),Quaternion.identity) as GameObject;
 		wall.transform.parent = container.transform;
 
 		float h = 1.0f;
 		wall.transform.localScale = new Vector3(1, h, 1);
 		wall.transform.localPosition = new Vector3(wall.transform.position.x, 0, wall.transform.position.z); // h / 2
 
-		Tile tile = tiles[row, col];
-		if (tile.color != Color.white) {
-			GameObject cube = wall.transform.Find("Cube").gameObject;
-			cube.renderer.material.color = tile.color;
+		// color wall
+		if (coloredZones) {
+			Tile tile = tiles[x, y];
+			if (tile.color != Color.white) {
+				GameObject cube = wall.transform.Find("Cube").gameObject;
+				cube.renderer.material.color = new Color(tile.color.r * 0.5f, tile.color.g * 0.5f, tile.color.b * 0,5f);
+			}
 		}
 
+		// adapt wall to direction x
+		if (x > 0 && tiles[x - 1, y].isWall() && x < MAP_WIDTH - 1 && tiles[x + 1, y].isWall()) {
+			if (y > 0 && !tiles[x, y - 1].isWall() && y < MAP_HEIGHT - 1 && !tiles[x, y + 1].isWall()) {
+				wall.transform.localScale = new Vector3(1, h, 0.35f);
+			}
+		}
+
+		// adap wall to direction y
+		if (y > 0 && tiles[x, y - 1].isWall() && y < MAP_HEIGHT - 1 && tiles[x, y + 1].isWall()) {
+			if (x > 0 && !tiles[x - 1, y].isWall() && x < MAP_WIDTH - 1 && !tiles[x + 1, y].isWall()) {
+				wall.transform.localScale = new Vector3(0.35f, h, 1);
+			}
+		}
+
+		// adapt walls on grid borders
+		if (tiles[x, y].id == TileType.WALL) {
+			if (x == 0 || x == MAP_WIDTH - 1) wall.transform.localScale = new Vector3(0.35f, h, 1);
+			if (y == 0 || y == MAP_HEIGHT - 1) wall.transform.localScale = new Vector3(1, h, 0.35f);
+		}
+		
 		return wall;
 	}
 
 
-	private GameObject createDoor (GameObject container, float row, float col) {
-		GameObject door = GameObject.Instantiate(prefabDoor,new Vector3(row, 0.0f, col),Quaternion.identity) as GameObject;
+	private GameObject createDoor (GameObject container, int x, int y) {
+		GameObject door = GameObject.Instantiate(prefabDoor,new Vector3(x, 0.0f, y),Quaternion.identity) as GameObject;
 		door.transform.parent = container.transform;
-
-
 
 		float h = 1f;
 		door.transform.localScale = new Vector3(0.9f, h, 0.9f);
 		door.transform.localPosition = new Vector3(door.transform.position.x, 0, door.transform.position.z); // h / 2
 
+		if (x > 0 && tiles[x - 1, y].isWall() && x < MAP_WIDTH - 1 && tiles[x + 1, y].isWall()) {
+			if (y > 0 && !tiles[x, y - 1].isWall() && y < MAP_HEIGHT - 1 && !tiles[x, y + 1].isWall()) {
+				door.transform.localScale = new Vector3(1, h, 0.2f);
+			}
+		}
+
+		if (y > 0 && tiles[x, y - 1].isWall() && y < MAP_HEIGHT - 1 && tiles[x, y + 1].isWall()) {
+			if (x > 0 && !tiles[x - 1, y].isWall() && x < MAP_WIDTH - 1 && !tiles[x + 1, y].isWall()) {
+				door.transform.localScale = new Vector3(0.2f, h, 1);
+			}
+		}
+
 		return door;
 	}
 
 
-	// *************************************************************
-	// Walkability grid
-	// *************************************************************
-
-	public void logGrid () {
-		print("Grid " + MAP_WIDTH + ", " + MAP_HEIGHT);
-
-		string str = "";
-		for (int y = 0; y < MAP_HEIGHT; y++) {
-			
-			for (int x = 0; x < MAP_WIDTH; x++) {
-				Tile tile = tiles[x, y];
-				str += tile.getWalkable() ? "1" : "0"; //id;
-			}
-			str += "\n";
-		}
-
-		print (str);
-	}
-
-
-	public void logRooms () {
-		print ("Rooms: " + rooms.Count);
-
-		for (int i = 0; i < rooms.Count; i++) {
-			Room room = rooms[i];
-			print ("    Room" + room.id +  " (" + room.tiles.Count + " tiles)");
-		}
-	}
-
-	
 	// *************************************************************
 	// Helper Methods
 	// *************************************************************
@@ -519,15 +590,6 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 	// Dig a room, placing floor tiles
 	public void DigRoom(Room room, int row_bottom, int col_left, int row_top, int col_right) {
-
-		///print(row_top + " " + row_bottom);
-		/*int d = 5;
-		row_top = Mathf.Clamp(row_top, d, MAP_HEIGHT - d - 1);
-		row_bottom = Mathf.Clamp(row_bottom, d, MAP_HEIGHT - d - 1);
-		col_left = Mathf.Clamp(col_left, d, MAP_WIDTH - d - 1);
-		col_right = Mathf.Clamp(col_right, d, MAP_WIDTH - d - 1);*/
-
-
 		// Out of range
 		if ( row_top < row_bottom ) {
 		    int tmp = row_top;
@@ -555,8 +617,6 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	
 
 	public void DigRoom(Room room, int row, int col) {
-		//if (row == 0 || row == MAP_WIDTH - 1 || col == 0 || col == MAP_HEIGHT - 1) return;
-
 		Tile tile = tiles[row,col];
 		tile.id = TileType.ROOM;
 		tile.room = room;
@@ -602,6 +662,66 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 			for (int row = row2; row < row2 + CORRIDOR_WIDTH; row++)
 				for (int col = col2; col <= col1; col++)
 					DigCorridor(row2,col);
+		}
+	}
+
+
+	// *************************************************************
+	// More Helper Methods
+	// *************************************************************
+
+	public Tile getTileAtPos (Vector3 pos) {
+		int x = (int)pos.x;
+		int y = (int)pos.z;
+
+		if (x < 0 || y < 0 || x > MAP_WIDTH - 1 || y > MAP_HEIGHT - 1) {
+			return null;
+		}
+
+		return tiles[x, y];
+	}
+
+	public Vector3 getRandomPosInDungeon () {
+		bool ok = false;
+		int x = 0;
+		int y = 0;
+		while (!ok) {
+			x = Random.Range(1, MAP_WIDTH - 1);
+			y = Random.Range(1, MAP_HEIGHT - 1);
+			ok = IsPassable(x, y);
+		}
+
+		return new Vector3(x, 0, y);
+	}
+
+
+	// *************************************************************
+	// Debug Logs
+	// *************************************************************
+
+	public void logGrid () {
+		print("Grid " + MAP_WIDTH + ", " + MAP_HEIGHT);
+
+		string str = "";
+		for (int y = 0; y < MAP_HEIGHT; y++) {
+			
+			for (int x = 0; x < MAP_WIDTH; x++) {
+				Tile tile = tiles[x, y];
+				str += tile.getWalkable() ? "1" : "0"; //id;
+			}
+			str += "\n";
+		}
+
+		print (str);
+	}
+
+
+	public void logRooms () {
+		print ("Rooms: " + rooms.Count);
+
+		for (int i = 0; i < rooms.Count; i++) {
+			Room room = rooms[i];
+			print ("    Room" + room.id +  " (" + room.tiles.Count + " tiles)");
 		}
 	}
 
@@ -653,35 +773,6 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		FileStream myFile = new FileStream(Application.dataPath + "/Resources/_debug/" + filename + ".png",FileMode.OpenOrCreate,System.IO.FileAccess.ReadWrite);
 		myFile.Write(bytes,0,bytes.Length);
 		myFile.Close();
-	}
-
-
-	// *************************************************************
-	// More Helper Methods
-	// *************************************************************
-
-	public Tile getTileAtPos (Vector3 pos) {
-		int x = (int)pos.x;
-		int y = (int)pos.z;
-
-		if (x < 0 || y < 0 || x > MAP_WIDTH - 1 || y > MAP_HEIGHT - 1) {
-			return null;
-		}
-
-		return tiles[x, y];
-	}
-
-	public Vector3 getRandomPosInDungeon () {
-		bool ok = false;
-		int x = 0;
-		int y = 0;
-		while (!ok) {
-			x = Random.Range(1, MAP_WIDTH - 1);
-			y = Random.Range(1, MAP_HEIGHT - 1);
-			ok = IsPassable(x, y);
-		}
-
-		return new Vector3(x, 0, y);
 	}
 	
 }

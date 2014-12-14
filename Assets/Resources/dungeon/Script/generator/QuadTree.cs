@@ -39,9 +39,11 @@ public class QuadTree {
 	public QuadTree(AABB _aabb) {
 		boundary = _aabb;
 		dungeon = DungeonGenerator.instance;
-		roomRealMinSize = dungeon.ROOM_MIN_SIZE + dungeon.ROOM_WALL_BORDER*2; // room floor size + "BORDER" walls for each axis
+
+		// room floor size + "BORDER" walls for each axis
+		// originally was * 2, but * 1 gives much better shapes
+		roomRealMinSize = dungeon.ROOM_MIN_SIZE + dungeon.ROOM_WALL_BORDER * 2 ; 
 	
-		//this.id = id;
 		this.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
 		this.tiles = new List<Tile>();
 	}

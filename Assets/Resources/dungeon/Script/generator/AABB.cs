@@ -7,20 +7,23 @@ public class AABB {
 	public XY center;
 	public XY half;
 	
-	public AABB () : this (new XY(0,0), new XY(0,0)) // Constructor
-	{
+
+	// Constructors
+
+	public AABB () : this (new XY(0,0), new XY(0,0)) { 
 		
 	}
+
 	
-	public AABB (XY _center, XY _half) // Constructor
-	{
+	public AABB (XY _center, XY _half) {
 		center = _center;
 		half = _half;
 	}
+
 	
 	// Helper Methods
-	public bool ContainsPoint(XY p)
-	{
+
+	public bool ContainsPoint(XY p) {
 		if (p.x > center.x + half.x) return false;
 		if (p.y > center.y + half.y) return false;
 		if (p.x < center.x - half.x) return false;
@@ -28,8 +31,7 @@ public class AABB {
 		return true;
 	}
 	
-	public bool Intersects(AABB other)
-	{
+	public bool Intersects(AABB other) {
 		bool _x = false;
 		bool _y = false;
 
@@ -39,68 +41,55 @@ public class AABB {
 		return _x&&_y;
 	}
 	
-	public XY TopLeft()
-	{
+	public XY TopLeft() {
 		return new XY(center.x - half.x, center.y + half.y);
 	}
 	
-	public XY TopRight()
-	{
+	public XY TopRight() {
 		return new XY(center.x + half.x, center.y + half.y);
 	}
 	
-	public XY BotLeft()
-	{
+	public XY BotLeft() {
 		return new XY(center.x - half.x, center.y - half.y);
 	}
 	
-	public XY BotRight()
-	{
+	public XY BotRight() {
 		return new XY(center.x + half.x, center.y - half.y);
 	}
 	
-	public float Left()
-	{
+	public float Left() {
 		return center.x - half.x;
 	}
 	
-	public float Right()
-	{
+	public float Right() {
 		return center.x + half.x;
 	}
 	
-	public float Top()
-	{
+	public float Top() {
 		return center.y + half.y;
 	}
 	
-	public float Bottom()
-	{
+	public float Bottom() {
 		return center.y - half.y;
 	}
 	
-	public int LeftTile()
-	{
+	public int LeftTile() {
 		return Mathf.RoundToInt(Left ());
 	}
 	
-	public int RightTile()
-	{
+	public int RightTile() {
 		return Mathf.RoundToInt(Right ());
 	}
 	
-	public int TopTile()
-	{
+	public int TopTile() {
 		return Mathf.RoundToInt(Top ());
 	}
 	
-	public int BottomTile()
-	{
+	public int BottomTile() {
 		return Mathf.RoundToInt(Bottom ());
 	}
 	
-	public XY Size()
-	{
+	public XY Size() {
 		return new XY(half.x*2,half.y*2);
 	}
 }

@@ -12,6 +12,15 @@ public enum TileType {
 	DOOR = 5
 }
 
+
+public class TileNeighbours {
+	public Tile n = null;
+	public Tile s = null;
+	public Tile w = null;
+	public Tile e = null;
+}
+
+
 //[System.Serializable]
 
 public class Tile {
@@ -40,5 +49,14 @@ public class Tile {
 		default:
 			return false;
 		}
+	}
+
+
+	public bool isWall () {
+		return id == TileType.WALL || id == TileType.WALLCORNER || id == TileType.DOOR;
+	}
+
+	public bool isEmpty () {
+		return id == TileType.EMPTY;
 	}
 }

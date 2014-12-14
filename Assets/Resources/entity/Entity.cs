@@ -42,7 +42,7 @@ public class Entity : MonoBehaviour {
 
 		getParts();
 
-		DOTween.defaultEaseType = Ease.OutQuad; // Ease.Linear; //
+		DOTween.defaultEaseType = Ease.OutQuad; // Ease.Linear; // 
 	}
 
 
@@ -87,7 +87,7 @@ public class Entity : MonoBehaviour {
 	public void moveTo (Vector3 goal) {
 		// get path
 		path = world.astar.SearchPath(transform.position, goal);
-		renderPath();
+		//renderPath();
 
 		// end current move if already moving
 		if (moving) endMove(); 
@@ -96,7 +96,7 @@ public class Entity : MonoBehaviour {
 		}
 
 		// create move sequence
-		moveSequence = DOTween.Sequence();
+		moveSequence = DOTween.Sequence(); //.SetEase(Ease.InOutQuad);
 		for(int i = 0; i < path.Count; i++) { addStep(i); }
 		moveSequence.PrependCallback(startMove);
 		moveSequence.AppendCallback(endMove);
@@ -157,7 +157,7 @@ public class Entity : MonoBehaviour {
 
 		float t = speed * 0.5f;
 
-		animSequence = DOTween.Sequence()
+		animSequence = DOTween.Sequence()//.SetEase(Ease.InOutQuad)
 			// rotate
 			.Append(legR.DOLocalRotate(new Vector3(45 * d, 0, 0), t))
 			.Join(legL.DOLocalRotate(new Vector3(-45 * d, 0, 0), t))
@@ -186,13 +186,35 @@ public class Entity : MonoBehaviour {
 	private void animLastStep () {
 		animSequence.Kill();
 
-		float t = speed * 0.9f;
+		firstStep = firstStep == 1 ? -1 : 1;
+		int d = firstStep;
 
-		DOTween.Sequence()
-			.Append(legR.DOLocalRotate(new Vector3(0, 0, 0), t))
+		float t = speed * 0.5f;
+
+		DOTween.Sequence()//.SetEase(Ease.InOutQuad)
+			/*.Append(legR.DOLocalRotate(new Vector3(0, 0, 0), t))
 			.Join(legL.DOLocalRotate(new Vector3(0, 0, 0), t))
 			.Join(armR.DOLocalRotate(new Vector3(-20, 0, 0), t))
 			.Join(armL.DOLocalRotate(new Vector3(-20, 0, 0), t))
+			.Join(torax.DOLocalRotate(new Vector3(0, 0, 0), t))
+			.Join(head.DOLocalRotate(new Vector3(0, 0, 0), t));*/
+			// rotate
+			.Append(legR.DOLocalRotate(new Vector3(45 * d, 0, 0), t))
+			.Join(legL.DOLocalRotate(new Vector3(-45 * d, 0, 0), t))
+
+			.Join(armR.DOLocalRotate(new Vector3(-35 * d, 0, 0), t))
+			.Join(armL.DOLocalRotate(new Vector3(35 * d, 0, 0), t))
+
+			.Join(torax.DOLocalRotate(new Vector3(0, -10 * d, 0), t))
+			.Join(head.DOLocalRotate(new Vector3(0, 20 * d, 0), t))
+
+			// reset
+			.Append(legR.DOLocalRotate(new Vector3(0, 0, 0), t))
+			.Join(legL.DOLocalRotate(new Vector3(0, 0, 0), t))
+
+			.Join(armR.DOLocalRotate(new Vector3(-20, 0, 0), t))
+			.Join(armL.DOLocalRotate(new Vector3(-20, 0, 0), t))
+
 			.Join(torax.DOLocalRotate(new Vector3(0, 0, 0), t))
 			.Join(head.DOLocalRotate(new Vector3(0, 0, 0), t));
 	}
@@ -204,6 +226,7 @@ public class Entity : MonoBehaviour {
 
 	private void jump () {
 		impulse = speed * 0.15f / 0.35f;
+		//impulse *= 1.1f;
 	}
 
 
