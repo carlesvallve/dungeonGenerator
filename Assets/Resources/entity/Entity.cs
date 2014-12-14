@@ -19,9 +19,15 @@ public class Entity : MonoBehaviour {
 
 	private List<Vector2> path;
 	private Sequence moveSequence;
+	private Sequence animSequence;
 
 	private bool moving = false;
-	private float speed = 0.4f;
+	private float speed = 0.3f;
+
+	private float gravity = 1.5f;
+	private float impulse;
+	private int firstStep = 1;
+	//private int currentStep = 0;
 	
 
 	// ************************************************************
@@ -37,7 +43,7 @@ public class Entity : MonoBehaviour {
 
 		getParts();
 
-		DOTween.defaultEaseType = Ease.Linear; //InOutQuad;
+		DOTween.defaultEaseType = Ease.OutQuad; // Ease.Linear; //
 	}
 
 
@@ -50,6 +56,12 @@ public class Entity : MonoBehaviour {
 		hip = transform.Find("Body/Hip");
 		legR = transform.Find("Body/Hip/LegR");
 		legL = transform.Find("Body/Hip/LegL");
+	}
+
+
+	void Update () {
+		snapToGround();
+		applyGravity();
 	}
 
 
@@ -70,8 +82,13 @@ public class Entity : MonoBehaviour {
 	public void moveTo (Vector3 goal) {
 		// get path
 		path = world.astar.SearchPath(transform.position, goal);
-		if (path.Count == 0) { return; }
 		renderPath();
+
+		// end current move if already moving
+		if (moving) endMove(); 
+		if (path.Count == 0) {
+			return; 
+		}
 
 		// create move sequence
 		moveSequence = DOTween.Sequence();
@@ -91,7 +108,8 @@ public class Entity : MonoBehaviour {
 
 	private void startMove () {
 		moving = true;
-		animStep(1);
+		animStep();
+		jump();
 	}
 
 
@@ -103,8 +121,13 @@ public class Entity : MonoBehaviour {
 
 
 	private void endStep (int i, Vector3 pos) {
+		// jump
+		if (i < path.Count - 1) jump();
+
+		// check for last step
+		if (i == path.Count - 2) animLastStep();
+
 		//print("step" + i + " -> " + (path.Count - 1));
-		//if (i < path.Count - 1) { jump(); }
 		/*if (i < path.Count) {
 			Vector3 nextPos = path[i + 1];
 			Tile tile = world.dungeon.getTileAtPos(new Vector3(nextPos.x, 0, nextPos.z));
@@ -121,34 +144,51 @@ public class Entity : MonoBehaviour {
 	}
 
 
-	private void animStep (int d) {
+	private void animStep () {
 		if (!moving) return;
 
-		float t = speed / 3;
+		firstStep = firstStep == 1 ? -1 : 1;
+		int d = firstStep;
 
-		DOTween.Sequence()
-			// move forward
+		//float t = currentStep < path.Count - 2 ? speed * 0.5f : speed * 0.25f;
+		float t = speed * 0.5f;
+
+		animSequence = DOTween.Sequence()
+			// rotate
 			.Append(legR.DOLocalRotate(new Vector3(45 * d, 0, 0), t))
 			.Join(legL.DOLocalRotate(new Vector3(-45 * d, 0, 0), t))
 
-			.Join(armR.DOLocalRotate(new Vector3(-45 * d, 0, 0), t))
-			.Join(armL.DOLocalRotate(new Vector3(45 * d, 0, 0), t))
+			.Join(armR.DOLocalRotate(new Vector3(-35 * d, 0, 0), t))
+			.Join(armL.DOLocalRotate(new Vector3(35 * d, 0, 0), t))
 
 			.Join(torax.DOLocalRotate(new Vector3(0, -10 * d, 0), t))
 			.Join(head.DOLocalRotate(new Vector3(0, 20 * d, 0), t))
 
-			// return
+			// reset
 			.Append(legR.DOLocalRotate(new Vector3(0, 0, 0), t))
 			.Join(legL.DOLocalRotate(new Vector3(0, 0, 0), t))
 
-			.Join(armR.DOLocalRotate(new Vector3(0, 0, 0), t))
-			.Join(armL.DOLocalRotate(new Vector3(0, 0, 0), t))
+			.Join(armR.DOLocalRotate(new Vector3(-20, 0, 0), t))
+			.Join(armL.DOLocalRotate(new Vector3(-20, 0, 0), t))
 
 			.Join(torax.DOLocalRotate(new Vector3(0, 0, 0), t))
 			.Join(head.DOLocalRotate(new Vector3(0, 0, 0), t))
 
 			// initiate next step
-			.OnComplete(()=>animStep(d == 1 ? -1 : 1));
+			.OnComplete(()=>animStep());
+	}
+
+
+	private void animLastStep () {
+		animSequence.Kill();
+		float t = speed;
+		DOTween.Sequence()
+			.Append(legR.DOLocalRotate(new Vector3(0, 0, 0), t))
+			.Join(legL.DOLocalRotate(new Vector3(0, 0, 0), t))
+			.Join(armR.DOLocalRotate(new Vector3(-20, 0, 0), t))
+			.Join(armL.DOLocalRotate(new Vector3(-20, 0, 0), t))
+			.Join(torax.DOLocalRotate(new Vector3(0, 0, 0), t))
+			.Join(head.DOLocalRotate(new Vector3(0, 0, 0), t));
 	}
 
 
@@ -156,26 +196,28 @@ public class Entity : MonoBehaviour {
 	// Jump
 	// ************************************************************
 
-	//private float jumpForce = 9f;
-
-	/*private void jump () {
-		// reset box physics
-		body.rigidbody.velocity = Vector3.zero;
-		body.rigidbody.angularVelocity = Vector3.zero;
-
-		//body.rigidbody.Sleep();
-		//body.position = Vector3.zero;
-
-		// make box jump
-		//Audio.play("audio/Squish", 0.5f, Random.Range(1.0f, 2.0f));
-		body.rigidbody.AddForce( new Vector3(0, jumpForce * body.rigidbody.mass, 0), ForceMode.Impulse);
-	}*/
-
-
-	/*void Update () {
-		snapToGround();
+	private void jump () {
+		// 0.35 -> 0.14
+		// speed = N
+		impulse = speed * 0.15f / 0.35f;
 	}
 
+
+	private void applyGravity () {
+		if (!body) return;
+
+		// Apply gravity
+     	impulse -= gravity * Time.deltaTime;
+     	body.Translate(0, impulse, 0);
+
+     	// limit body y-position
+     	if (body.localPosition.y < 0.275f) body.localPosition = new Vector3(0, 0.275f, 0);
+	}
+
+
+	// ************************************************************
+	// Snap to the ground
+	// ************************************************************
 
 	private void snapToGround () {
 		RaycastHit hit;
@@ -189,5 +231,5 @@ public class Entity : MonoBehaviour {
 				);
 			}
 		}
-	}*/
+	}
 }
