@@ -34,7 +34,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	public int CORRIDOR_WIDTH = 2;
 
 	// Colored quadtree zones
-	public bool coloredZones = false;
+	public bool coloredZones = true;
 	
 	// Tilemap
 	public Tile[,] tiles;
@@ -275,6 +275,8 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 						if (y == 0 && tiles[x, y + 1].isWall()) SetWallCorner(x, y);
 						if (x == MAP_WIDTH - 1 && tiles[x - 1, y].isWall()) SetWallCorner(x, y);
 						if (y == MAP_HEIGHT - 1 && tiles[x, y - 1].isWall()) SetWallCorner(x, y);
+						if (x == 0 && y == 0) SetWallCorner(x, y);
+						if (x == MAP_WIDTH - 1 && y == MAP_HEIGHT - 1)  SetWallCorner(x, y);
 					}
 				}
 			}
@@ -490,7 +492,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 			Tile tile = tiles[x, y];
 			if (tile.color != Color.white) {
 				GameObject cube = wall.transform.Find("Cube").gameObject;
-				cube.renderer.material.color = new Color(tile.color.r * 0.5f, tile.color.g * 0.5f, tile.color.b * 0,5f);
+				cube.renderer.material.color = new Color(tile.color.r * 0.75f, tile.color.g * 0.75f, tile.color.b * 0.75f);
 			}
 		}
 
