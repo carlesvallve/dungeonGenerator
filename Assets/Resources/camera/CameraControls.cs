@@ -38,14 +38,11 @@ public class Rotating {
 
 [System.Serializable]
 public class Zooming {
-	[Range(1f, 120f)]
-	public float distance = 60f;
+	[Range(1f, 120f)] public float distance = 60f;
 	public float speed = 25f;
 	public float orthographicFactor = 0.25f;
-	[HideInInspector]
-	public float distanceMin = 3f;
-	[HideInInspector]
-	public float distanceMax = 120f;
+	[HideInInspector] public float distanceMin = 3f;
+	[HideInInspector] public float distanceMax = 120f;
 }
 
 
@@ -58,9 +55,9 @@ public class CameraControls : MonoBehaviour {
 	public Rotating rotating;
 	public Zooming zooming;
 
-	private Vector3 positionTo;
-	private Vector3 angleTo;
-	private float distanceTo;
+	[HideInInspector] public Vector3 positionTo;
+	[HideInInspector] public Vector3 angleTo;
+	[HideInInspector] public float distanceTo;
 	
 
 
@@ -83,7 +80,7 @@ public class CameraControls : MonoBehaviour {
 
 	// manage user input on update
 
-	void Update () {
+	void setInputControls () {
 		// middle button to pan
 		if (Input.GetMouseButtonDown((int)panning.control)) panning.enabled = true;
 		if (Input.GetMouseButtonUp((int)panning.control)) panning.enabled = false;
@@ -117,8 +114,10 @@ public class CameraControls : MonoBehaviour {
 
 	// update position and rotation on late update
 
-	void LateUpdate () {
+	void Update () {
 		if (!target) return;
+
+		setInputControls();
 
 		// reset interpolation goals if we are zooming or panning
 		if (panning.enabled || rotating.enabled) {

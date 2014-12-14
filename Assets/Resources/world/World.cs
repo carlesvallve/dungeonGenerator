@@ -8,19 +8,18 @@ public class World : MonoBehaviour {
 	public TouchLayer touchLayer;
 
 	public DungeonGenerator dungeon;
-
-	CameraControls cam;
-	GameObject cube1;
-	GameObject cube2;
-
-	Entity entity;
-
 	public Astar astar;
+
+	public CameraControls cam;
+
+	private Entity entity;
+	
+	private GameObject cube1;
+	private GameObject cube2;
 
 
 	void Start () {
 		dungeon = GameObject.Find("Dungeon").GetComponent<DungeonGenerator>();
-
 		cam = Camera.main.GetComponent<CameraControls>();
 
 		cube1 = GameObject.Find("Cube1");
@@ -31,66 +30,40 @@ public class World : MonoBehaviour {
 
 	
 	void Update () {
-		if (Input.GetKeyDown("space")) {
-			generateDungeon();
-		}
-
-		if (Input.GetKeyDown("1")) {
-			locateCubesAtRandom();
-		}
-
-		if (Input.GetKeyDown("2")) {
-			changeCameraTarget();
-		}
-
-		if (Input.GetKeyDown("3")) {
-			changeCameraView();
-		}
+		if (Input.GetKeyDown("space")) generateDungeon();
+		if (Input.GetKeyDown("1")) locateCubesAtRandom();
+		if (Input.GetKeyDown("2")) changeCameraTarget();
+		if (Input.GetKeyDown("3")) changeCameraView();
 	}
 
 
 	private void generateDungeon () {
-			// Generate a new Seed
-			dungeon.seed = System.DateTime.Now.Millisecond*1000 + System.DateTime.Now.Minute*100;
-			Random.seed = dungeon.seed;
-			
-			// Generate Dungeon
-			Debug.Log ("Dungeon Generation Started with seed " + dungeon.seed);
-			dungeon.GenerateDungeon(dungeon.seed);
+		// Generate a new Seed
+		dungeon.seed = System.DateTime.Now.Millisecond*1000 + System.DateTime.Now.Minute*100;
+		Random.seed = dungeon.seed;
+		
+		// Generate Dungeon
+		Debug.Log ("Dungeon Generation Started with seed " + dungeon.seed);
+		dungeon.GenerateDungeon(dungeon.seed);
+		//dungeon.logGrid();
+		//dungeon.logRooms();
 
-			astar = new Astar(dungeon.tiles);
+		// initialize astar pathfinder
+		astar = new Astar(dungeon.tiles);
 
-			//dungeon.logGrid();
-			//dungeon.logRooms();
-
-			if (entity) {
-				Destroy(entity.gameObject);
-			}
-
-			Vector3 pos = dungeon.getRandomPosInDungeon();
-			Vector3 rot = new Vector3(0, new int[] { 0, 90, 180, 270 }[Random.Range(0, 4)], 0);
-			entity = createEntity(pos, rot);
-			
-			cam.target = entity.transform;
-
-			// locateCubesAtRandom();
-			
-			// initialize grid
-			//initGrid();
-
-			// create player at the center of a random room
-			/*Room room = dungeon.rooms[Random.Range(0, dungeon.rooms.Count - 1)];
-			Vector3 pos = new Vector3(Mathf.Round(room.boundary.center.x), 0, Mathf.Round(room.boundary.center.y));
-			player = createPlayer(pos);
-
-			// create some monsters
-			monsters = createMonsters(80);*/
+		// create entity hero
+		if (entity) Destroy(entity.gameObject);
+		Vector3 pos = dungeon.getRandomPosInDungeon();
+		Vector3 rot = new Vector3(0, new int[] { 0, 90, 180, 270 }[Random.Range(0, 4)], 0);
+		entity = createEntity(pos, rot);
+		
+		// set camera target
+		cam.target = entity.transform;
 	}
 
 
 	private Entity createEntity (Vector3 pos, Vector3 rot) {
 		GameObject obj = (GameObject)Instantiate(Resources.Load("entity/Ent"));
-		
 		Entity entity = obj.GetComponent<Entity>();
 		entity.init(this, this.transform, pos, rot);
 
@@ -119,25 +92,6 @@ public class World : MonoBehaviour {
 		cam.interpolateTo (Vector3.zero, new Vector3(Random.Range(10, 90), Random.Range(0, 360), 0), Random.Range(10, 80));
 	}
 
-
-	/*private void initGrid () {
-		// init grid cells for astar calculations
-        Grid.InitEmpty(dungeon.MAP_WIDTH, dungeon.MAP_HEIGHT);
-        print ("Initializing grid " + Grid.xsize + "," + Grid.ysize);
-
-        // set walkability map
-        for (int y = 0; y < Grid.ysize; y++) {
-			for (int x = 0; x < Grid.xsize; x++) {
-				// set rooms and corridor cells to walkable
-				Tile tile = dungeon.tiles[x, y];
-				if (tile.id == Tile.TILE_ROOM || tile.id == Tile.TILE_CORRIDOR) {
-					Grid.setWalkable(y, x, true);
-				} else {
-					Grid.setWalkable(y, x, false);
-				}
-			}
-		}
-	}*/
 
 	// *****************************************************
 	// Gestures

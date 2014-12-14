@@ -27,7 +27,6 @@ public class Entity : MonoBehaviour {
 	private float gravity = 1.5f;
 	private float impulse;
 	private int firstStep = 1;
-	//private int currentStep = 0;
 	
 
 	// ************************************************************
@@ -60,8 +59,14 @@ public class Entity : MonoBehaviour {
 
 
 	void Update () {
-		snapToGround();
+		// center camera on ent while moving
+		if (moving) world.cam.positionTo = new Vector3(0, 0.35f, 0);
+
+		// apply gravity
 		applyGravity();
+
+		// snap ent to the ground
+		//snapToGround();
 	}
 
 
@@ -150,7 +155,6 @@ public class Entity : MonoBehaviour {
 		firstStep = firstStep == 1 ? -1 : 1;
 		int d = firstStep;
 
-		//float t = currentStep < path.Count - 2 ? speed * 0.5f : speed * 0.25f;
 		float t = speed * 0.5f;
 
 		animSequence = DOTween.Sequence()
@@ -181,7 +185,9 @@ public class Entity : MonoBehaviour {
 
 	private void animLastStep () {
 		animSequence.Kill();
-		float t = speed;
+
+		float t = speed * 0.9f;
+
 		DOTween.Sequence()
 			.Append(legR.DOLocalRotate(new Vector3(0, 0, 0), t))
 			.Join(legL.DOLocalRotate(new Vector3(0, 0, 0), t))
@@ -197,8 +203,6 @@ public class Entity : MonoBehaviour {
 	// ************************************************************
 
 	private void jump () {
-		// 0.35 -> 0.14
-		// speed = N
 		impulse = speed * 0.15f / 0.35f;
 	}
 
