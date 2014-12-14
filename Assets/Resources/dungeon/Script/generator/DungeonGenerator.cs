@@ -5,6 +5,7 @@ using System.IO;
 
 /*
 TODO:
+- Better way of coloring tiles, we have waaay too many drawcalls colorig them individually
 - FOV visibility system
 - stairs and diferent height levels 
 - start and end spots that allow us to navigate through dungeon levels
@@ -358,10 +359,14 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 				for (int col = _quadtree.boundary.LeftTile(); col <= _quadtree.boundary.RightTile()-1; col++) {
 					// get tile and add it to quadtree zone
 					Tile tile = tiles[row,col];
-					tile.color = _quadtree.color;
 					_quadtree.tiles.Add(tile);
 
-					// set tile color to quadtree's zone color
+					// set tile color and material
+					tile.color = _quadtree.color;
+					tile.materialFloor = _quadtree.materialFloor;
+					tile.materialWall = _quadtree.materialWall;
+					
+					// create floors
 					if (tile.id == TileType.ROOM || tile.id == TileType.CORRIDOR) {
 						GameObject floor = createFloor(container, row, col);
 						tiles[row,col].obj = floor;
@@ -397,15 +402,14 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 		float h = 0.01f;
 		floor.transform.localScale = new Vector3(1, h, 1);
-		floor.transform.localPosition = new Vector3(x, 0, y); // h / 2
+		floor.transform.localPosition = new Vector3(x, 0, y);
 
 		// color floor
 		if (coloredZones) {
 			Tile tile = tiles[x, y];
-			if (tile.color != Color.white) {
-				GameObject cube = floor.transform.Find("Cube").gameObject;
-				cube.renderer.material.color = tile.color;
-			}
+			GameObject cube = floor.transform.Find("Cube").gameObject;
+			cube.renderer.material = tile.materialFloor;
+			//cube.renderer.material.SetTextureOffset("_MainTex", new Vector2(0.333f * Random.Range(0, 3) ,0.333f * Random.Range(0, 3)));
 		}
 		
 
@@ -419,15 +423,13 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 		float h = 0.01f;
 		floor.transform.localScale = new Vector3(1, h, 1);
-		floor.transform.localPosition = new Vector3(x, 0, y); // h / 2
+		floor.transform.localPosition = new Vector3(x, 0, y);
 
 		// color floor under wall
 		if (coloredZones) {
 			Tile tile = tiles[x, y];
-			if (tile.color != Color.white) {
-				GameObject cube = floor.transform.Find("Cube").gameObject;
-				cube.renderer.material.color = tile.color;
-			}
+			GameObject cube = floor.transform.Find("Cube").gameObject;
+			cube.renderer.material = tile.materialFloor;
 		}
 
 		// adapt floor under wall to direction x
@@ -485,15 +487,14 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 		float h = 1.0f;
 		wall.transform.localScale = new Vector3(1, h, 1);
-		wall.transform.localPosition = new Vector3(wall.transform.position.x, 0, wall.transform.position.z); // h / 2
+		wall.transform.localPosition = new Vector3(wall.transform.position.x, 0, wall.transform.position.z);
 
 		// color wall
 		if (coloredZones) {
 			Tile tile = tiles[x, y];
-			if (tile.color != Color.white) {
-				GameObject cube = wall.transform.Find("Cube").gameObject;
-				cube.renderer.material.color = new Color(tile.color.r * 0.75f, tile.color.g * 0.75f, tile.color.b * 0.75f);
-			}
+			GameObject cube = wall.transform.Find("Cube").gameObject;
+			//cube.renderer.material.color = new Color(tile.color.r * 0.75f, tile.color.g * 0.75f, tile.color.b * 0.75f);
+			cube.renderer.material = tile.materialWall;
 		}
 
 		// adapt wall to direction x
@@ -526,7 +527,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 		float h = 1f;
 		door.transform.localScale = new Vector3(0.9f, h, 0.9f);
-		door.transform.localPosition = new Vector3(door.transform.position.x, 0, door.transform.position.z); // h / 2
+		door.transform.localPosition = new Vector3(door.transform.position.x, 0, door.transform.position.z);
 
 		if (x > 0 && tiles[x - 1, y].isWall() && x < MAP_WIDTH - 1 && tiles[x + 1, y].isWall()) {
 			if (y > 0 && !tiles[x, y - 1].isWall() && y < MAP_HEIGHT - 1 && !tiles[x, y + 1].isWall()) {

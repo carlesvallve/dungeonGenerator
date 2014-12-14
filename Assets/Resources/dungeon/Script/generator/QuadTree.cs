@@ -31,11 +31,15 @@ public class QuadTree {
 	// Room it contains
 	public Room room;
 
+	public List<Tile> tiles;
+
 	public int id;
 	public Color color = Color.white;
-	public List<Tile> tiles;
+	public Material materialFloor;
+	public Material materialWall;
 	
 	// Constructor
+
 	public QuadTree(AABB _aabb) {
 		boundary = _aabb;
 		dungeon = DungeonGenerator.instance;
@@ -44,8 +48,21 @@ public class QuadTree {
 		// originally was * 2, but * 1 gives much better shapes
 		roomRealMinSize = dungeon.ROOM_MIN_SIZE + dungeon.ROOM_WALL_BORDER * 2 ; 
 	
-		this.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
 		this.tiles = new List<Tile>();
+
+		this.color = new Color(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), Random.Range(0.2f, 1f));
+		
+		this.materialFloor = new Material (Shader.Find(" Diffuse"));
+		this.materialFloor.color = this.color;
+		this.materialFloor.mainTexture = Resources.Load("dungeon/Textures/grid") as Texture2D;
+		this.materialFloor.SetTextureScale("_MainTex", new Vector2(0.333f,0.333f));
+		//this.materialFloor.SetTextureOffset("_MainTex", new Vector2(0.333f * Random.Range(0, 3) ,0.333f * Random.Range(0, 3)));
+	
+		this.materialWall = new Material (Shader.Find(" Diffuse"));
+		this.materialWall.color = new Color(color.r * 0.75f, color.g * 0.75f, color.b * 0.75f);
+		this.materialWall.mainTexture = this.materialFloor.mainTexture;
+		this.materialWall.SetTextureScale("_MainTex", new Vector2(0.333f,0.333f));
+
 	}
 	
 	/*
