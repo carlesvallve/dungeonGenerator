@@ -362,24 +362,24 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 
 					// set tile color and material
 					tile.color = _quadtree.color;
-					tile.materialFloor = _quadtree.materialFloor;
-					tile.materialWall = _quadtree.materialWall;
+					tile.material = tile.isWall() ? _quadtree.materialWall : _quadtree.materialFloor;
 					
 					// create floors
 					if (tile.id == TileType.ROOM || tile.id == TileType.CORRIDOR) {
-						GameObject floor = createFloor(container, row, col);
+						GameObject floor = createFloor(container, tile.material, row, col);
 						tiles[row,col].obj = floor;
 					}
 
 					// create walls
 					if (tile.id == TileType.WALL || tile.id == TileType.WALLCORNER) {
-						GameObject wall = createWall(container, row, col);
-						createFloorUnderWall(container, wall, row, col);
+						GameObject wall = createWall(container, tile.material, row, col);
+						createFloorUnderWall(container, wall, _quadtree.materialFloor, row, col);
 						tiles[row,col].obj = wall;
 					}
+
 					// create doors
 					if (tile.id == TileType.DOOR) {
-						createFloor(container, row, col);
+						createFloor(container, tile.material, row, col);
 						GameObject door = createDoor(container, row, col);
 						tiles[row,col].obj = door;
 					}
@@ -395,7 +395,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	}
 
 
-	private GameObject createFloor (GameObject container, int x, int y) {
+	private GameObject createFloor (GameObject container, Material material, int x, int y) {
 		GameObject floor = GameObject.Instantiate(prefabFloor,new Vector3(x, 0.0f, y),Quaternion.identity) as GameObject;
 		floor.transform.parent = container.transform;
 
@@ -404,19 +404,13 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		floor.transform.localPosition = new Vector3(x, 0, y);
 
 		// color floor
-		if (coloredZones) {
-			Tile tile = tiles[x, y];
-			GameObject cube = floor.transform.Find("Cube").gameObject;
-			cube.renderer.material = tile.materialFloor;
-			//cube.renderer.material.SetTextureOffset("_MainTex", new Vector2(0.333f * Random.Range(0, 3) ,0.333f * Random.Range(0, 3)));
-		}
-		
+		if (coloredZones) floor.transform.Find("Cube").gameObject.renderer.material = material;
 
 		return floor;
 	}
 
 
-	private GameObject createFloorUnderWall (GameObject container, GameObject wall, int x, int y) {
+	private GameObject createFloorUnderWall (GameObject container, GameObject wall, Material material, int x, int y) {
 		GameObject floor = GameObject.Instantiate(prefabFloor,new Vector3(x, 0.0f, y),Quaternion.identity) as GameObject;
 		floor.transform.parent = container.transform;
 
@@ -425,11 +419,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		floor.transform.localPosition = new Vector3(x, 0, y);
 
 		// color floor under wall
-		if (coloredZones) {
-			Tile tile = tiles[x, y];
-			GameObject cube = floor.transform.Find("Cube").gameObject;
-			cube.renderer.material = tile.materialFloor;
-		}
+		if (coloredZones) floor.transform.Find("Cube").gameObject.renderer.material = material;
 
 		// adapt floor under wall to direction x
 		if (wall.transform.localScale.x < 1) {
@@ -480,7 +470,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 	}
 
 
-	private GameObject createWall (GameObject container, int x, int y) {
+	private GameObject createWall (GameObject container, Material material, int x, int y) {
 		GameObject wall = GameObject.Instantiate(prefabWall,new Vector3(x, 0.0f, y),Quaternion.identity) as GameObject;
 		wall.transform.parent = container.transform;
 
@@ -489,12 +479,7 @@ public class DungeonGenerator : MonoSingleton <DungeonGenerator> {
 		wall.transform.localPosition = new Vector3(wall.transform.position.x, 0, wall.transform.position.z);
 
 		// color wall
-		if (coloredZones) {
-			Tile tile = tiles[x, y];
-			GameObject cube = wall.transform.Find("Cube").gameObject;
-			//cube.renderer.material.color = new Color(tile.color.r * 0.75f, tile.color.g * 0.75f, tile.color.b * 0.75f);
-			cube.renderer.material = tile.materialWall;
-		}
+		if (coloredZones) wall.transform.Find("Cube").gameObject.renderer.material = material;
 
 		// adapt wall to direction x
 		if (x > 0 && tiles[x - 1, y].isWall() && x < MAP_WIDTH - 1 && tiles[x + 1, y].isWall()) {

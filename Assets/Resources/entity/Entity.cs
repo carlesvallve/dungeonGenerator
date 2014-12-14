@@ -10,6 +10,8 @@ TODO:
 - Attack action and animation
 - Defend action and animation
 - Impact action and animation
+
+- Create a hero editor!
 */
 
 

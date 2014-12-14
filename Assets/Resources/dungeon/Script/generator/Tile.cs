@@ -31,8 +31,7 @@ public class Tile {
 	public Room room;
 
 	public Color color = Color.white;
-	public Material materialFloor;
-	public Material materialWall;
+	public Material material;
 
 
 	public Tile ( TileType id ) {
