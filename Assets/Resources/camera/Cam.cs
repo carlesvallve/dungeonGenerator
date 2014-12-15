@@ -8,6 +8,8 @@ public class Cam : MonoBehaviour {
 	public Vector3 angle = new Vector3(55, -45, 0);
 	public float distance = 20f;
 
+	private bool isRotating;
+
 
 	void Start () {
 		if(!target) {
@@ -27,6 +29,17 @@ public class Cam : MonoBehaviour {
 
 	
 	void Update () {
+		#if UNITY_EDITOR
+			if (Input.GetMouseButtonDown(0)) isRotating = true;
+			if (Input.GetMouseButtonUp(0)) isRotating = false;
+			if (isRotating) {
+				angle.y += Input.GetAxis("Mouse X") * 5.0f;
+				angle.x -= Input.GetAxis("Mouse Y") * 5.0f;
+			}
+
+			distance -= Input.GetAxis("Mouse ScrollWheel") * 3.0f;
+		#endif
+
 		Quaternion rotation = Quaternion.Euler(angle.x, angle.y, 0);
 		Vector3 position =  rotation * new Vector3(0.0f, 0.0f, -distance) + target.position + panning;
 
