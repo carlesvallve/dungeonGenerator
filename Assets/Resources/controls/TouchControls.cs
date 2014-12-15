@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
+using UnityEngine.EventSystems;
 
 
 public class TouchControls : MonoBehaviour {
@@ -50,6 +51,7 @@ public class TouchControls : MonoBehaviour {
 
 
 	private void press(TouchData activeTouch, float x, float y) {
+		if (EventSystem.current.IsPointerOverGameObject()) return;
 		
 		activeTouch.active = true;
 		activeTouch.setInitialData(x, y);
@@ -63,6 +65,8 @@ public class TouchControls : MonoBehaviour {
 
 
 	private void release(TouchData activeTouch, float x, float y) {
+		if (EventSystem.current.IsPointerOverGameObject()) return;
+
 		activeTouch.setData(x, y);
 		activeTouch.active = false;
 
@@ -81,6 +85,8 @@ public class TouchControls : MonoBehaviour {
 
 
 	private void move(TouchData activeTouch, float x, float y) {
+		if (EventSystem.current.IsPointerOverGameObject()) return;
+
 		activeTouch.setData(x, y);
 
 		if (activeTouch.relativeDeltaPos.magnitude > 0) {

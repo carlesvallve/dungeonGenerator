@@ -49,6 +49,7 @@ public class Entity : MonoBehaviour {
 		
 		transform.parent = parent.transform;
 		transform.localPosition = pos;
+		transform.localScale =  new Vector3(1, 1, 1);
 		transform.localEulerAngles = rot;
 
 		getParts();
@@ -71,7 +72,7 @@ public class Entity : MonoBehaviour {
 
 	void Update () {
 		// center camera on ent while moving
-		if (moving) world.cam.positionTo = new Vector3(0, 0.35f, 0);
+		//if (moving) world.cam.positionTo = new Vector3(0, 0.35f, 0);
 
 		// apply gravity
 		applyGravity();
@@ -97,7 +98,7 @@ public class Entity : MonoBehaviour {
 
 	public void moveTo (Vector3 goal) {
 		// get path
-		path = world.astar.SearchPath(transform.position, goal);
+		path = world.astar.SearchPath(transform.localPosition, goal);
 		//renderPath();
 
 		// end current move if already moving
@@ -113,7 +114,7 @@ public class Entity : MonoBehaviour {
 		moveSequence.AppendCallback(endMove);
 		
 		// if enough angle diff, rotate ent and delay sequence by rotation time
-		Vector3 vec = new Vector3(path[0].x, 0, path[0].y) - transform.position;
+		Vector3 vec = new Vector3(path[0].x, 0, path[0].y) - transform.localPosition;
 		float angle = Vector3.Angle(transform.forward, vec);
 		if (angle >= 45) {
 			moveSequence.PrependInterval(speed / 2);
@@ -253,13 +254,13 @@ public class Entity : MonoBehaviour {
 
 	private void snapToGround () {
 		RaycastHit hit;
-		Vector3 pos = new Vector3(transform.position.x, transform.position.y + 5, transform.position.z);
+		Vector3 pos = new Vector3(transform.localPosition.x, transform.localPosition.y + 5, transform.localPosition.z);
 		if (Physics.Raycast(pos, -Vector3.up * 100, out hit)) {
 			if (hit.transform != transform) {
-				transform.position = new Vector3(
-					transform.position.x,
+				transform.localPosition = new Vector3(
+					transform.localPosition.x,
 					hit.point.y, // + 0.01f,
-					transform.position.z
+					transform.localPosition.z
 				);
 			}
 		}

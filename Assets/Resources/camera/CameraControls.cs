@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.EventSystems;
 
 
 // control modes
@@ -81,6 +82,8 @@ public class CameraControls : MonoBehaviour {
 	// manage user input on update
 
 	void setInputControls () {
+		if (EventSystem.current.IsPointerOverGameObject()) return;
+
 		// middle button to pan
 		if (Input.GetMouseButtonDown((int)panning.control)) panning.enabled = true;
 		if (Input.GetMouseButtonUp((int)panning.control)) panning.enabled = false;
@@ -147,6 +150,22 @@ public class CameraControls : MonoBehaviour {
 				Time.deltaTime * rotating.interpolation * zooming.orthographicFactor
 			);
 		}
+	}
+
+
+	// set new goals to interpolate to
+
+	public void locateTo (Vector3 position, Vector3 angle, float distance) {
+		panning.position = position;
+		rotating.angle = angle;
+		zooming.distance = distance;
+
+		positionTo = position;
+		angleTo = angle;
+		distanceTo = distance;
+
+		Quaternion rotation = Quaternion.Euler(rotating.angle.x, rotating.angle.y, 0);
+		transform.position =  rotation * new Vector3(0.0f, 0.0f, -zooming.distance) + target.position + panning.position;
 	}
 
 

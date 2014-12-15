@@ -10,7 +10,8 @@ public class World : MonoBehaviour {
 	public DungeonGenerator dungeon;
 	public Astar astar;
 
-	public CameraControls cam;
+	//public CameraControls cam;
+	public Cam cam;
 
 	private Entity entity;
 	
@@ -20,7 +21,8 @@ public class World : MonoBehaviour {
 
 	void Start () {
 		dungeon = GameObject.Find("Dungeon").GetComponent<DungeonGenerator>();
-		cam = Camera.main.GetComponent<CameraControls>();
+		cam = Camera.main.GetComponent<Cam>();
+		//cam = Camera.main.GetComponent<CameraControls>();
 
 		cube1 = GameObject.Find("Cube1");
 		cube2 = GameObject.Find("Cube2");
@@ -37,7 +39,7 @@ public class World : MonoBehaviour {
 	}
 
 
-	private void generateDungeon () {
+	public void generateDungeon () {
 		// Generate a new Seed
 		dungeon.seed = System.DateTime.Now.Millisecond*1000 + System.DateTime.Now.Minute*100;
 		Random.seed = dungeon.seed;
@@ -58,7 +60,9 @@ public class World : MonoBehaviour {
 		entity = createEntity(pos, rot);
 		
 		// set camera target
-		cam.target = entity.transform;
+		cam.setTarget(entity.transform);
+		//cam.target = entity.transform;
+		//cam.locateTo(Vector3.zero, new Vector3(55, -45, 0), 20);
 	}
 
 
@@ -84,12 +88,12 @@ public class World : MonoBehaviour {
 			cam.target = cube1.transform;
 		}
 
-		cam.interpolateTo (Vector3.zero, new Vector3(Random.Range(10, 90), Random.Range(0, 360), 0), Random.Range(10, 80));
+		//cam.interpolateTo (Vector3.zero, new Vector3(Random.Range(10, 90), Random.Range(0, 360), 0), Random.Range(10, 80));
 	}
 
 
 	private void changeCameraView () {
-		cam.interpolateTo (Vector3.zero, new Vector3(Random.Range(10, 90), Random.Range(0, 360), 0), Random.Range(10, 80));
+		//cam.interpolateTo (Vector3.zero, new Vector3(Random.Range(10, 90), Random.Range(0, 360), 0), Random.Range(10, 80));
 	}
 
 
