@@ -113,20 +113,28 @@ public class World : MonoBehaviour {
 	}
 
 
-	//private Vector3 pressPos;
+	private Vector3 pressPos;
 	public void onTouchPress (TouchEvent e) {
 		//print("press " + e.activeTouch.getPos3d(Camera.main));
-		//pressPos = e.activeTouch.getPos3d(Camera.main);
+		pressPos = e.activeTouch.getPos3d(Camera.main);
 	}
 
 
 	public void onTouchRelease (TouchEvent e) {
 		//print("release " + e.activeTouch.getPos3d(Camera.main));
 
-		if (e.activeTouch.deltaPos.magnitude >= 1f) return;
+		//if (cam.isPanning) return;
+
+		Vector3 pos = e.activeTouch.getPos3d(Camera.main);
+		if ((pressPos - pos).magnitude > 1f) return;
+
+		//if (e.activeTouch.relativeDeltaPos.magnitude < 0.5f) {
 
 		Transform obj = e.activeTouch.getObject3d(Camera.main);
 		if (!obj) return;
+
+		//Tile tile = dungeon.getTileAtPos(obj.transform.position);
+		//print(obj + " " + tile.id);
 
 		entity.moveTo(obj.transform.position);
 	}

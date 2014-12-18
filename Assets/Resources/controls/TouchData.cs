@@ -20,12 +20,18 @@ public class TouchData {
 
 	public float swipeForce = 0.1f;
 	public float maxDeltaTime = 0.5f;
-	public float maxDeltaPos = 48.0f;
+	public float maxDeltaPos = 44.0f;
 
 
 	public TouchData(int id) {
 		this.id = id;
-	}
+
+		#if UNITY_EDITOR
+			maxDeltaPos = 1.0f;
+		#else
+			maxDeltaPos = 44.0f;
+		#endif
+	}	
 
 
 	public bool isSwipe() {
