@@ -132,8 +132,12 @@ public class World : MonoBehaviour {
 	public void onTouchRelease (TouchEvent e) {
 		//print("release " + e.activeTouch.getPos3d(Camera.main));
 
+		//if (cam.isPanning) return;
+
 		Vector3 pos = e.activeTouch.getPos3d(Camera.main);
-		if ((pressPos - pos).magnitude > 0.5f) return;
+		if ((pressPos - pos).magnitude > 1f) return;
+
+		//if (e.activeTouch.relativeDeltaPos.magnitude < 0.5f) {
 
 		Transform obj = e.activeTouch.getObject3d(Camera.main);
 		if (!obj) return;

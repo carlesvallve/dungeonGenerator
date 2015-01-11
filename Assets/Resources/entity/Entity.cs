@@ -33,10 +33,11 @@ public class Entity : MonoBehaviour {
 	private Sequence animSequence;
 
 	private bool moving = false;
-	private float speed = 0.3f;
+	private float speed = 0.2f;
+	private float impulse = 0.15f;
+	private float gravity = 2.0f;
+	private float jumpForce;
 
-	private float gravity = 1.5f;
-	private float impulse;
 	private int firstStep = 1;
 	
 
@@ -97,6 +98,10 @@ public class Entity : MonoBehaviour {
 
 
 	public void moveTo (Vector3 goal) {
+		// center camera on target
+		
+		world.cam.panning = new Vector3(0, 0.35f, 0); //new Vector3(goal.x, 0.35f, goal.z) - transform.position;
+
 		// get path
 		path = world.astar.SearchPath(transform.localPosition, goal);
 		//renderPath();
@@ -250,7 +255,7 @@ public class Entity : MonoBehaviour {
 	// ************************************************************
 
 	private void jump () {
-		impulse = speed * 0.15f / 0.35f;
+		jumpForce = impulse; // = speed * 0.15f / 0.35f;
 		//impulse *= 1.1f;
 	}
 
@@ -259,8 +264,8 @@ public class Entity : MonoBehaviour {
 		if (!body) return;
 
 		// Apply gravity
-     	impulse -= gravity * Time.deltaTime;
-     	body.Translate(0, impulse, 0);
+     	jumpForce -= gravity * Time.deltaTime;
+     	body.Translate(0, jumpForce, 0);
 
      	// limit body y-position
      	if (body.localPosition.y < 0.275f) body.localPosition = new Vector3(0, 0.275f, 0);
