@@ -126,20 +126,39 @@ public class Entity : MonoBehaviour {
 	private void startMove () {
 		moving = true;
 		animStep();
-		jump();
 	}
 
 
 	private void addStep(int i) {
 		Vector3 pos = new Vector3(path[i].x, 0, path[i].y);
-		moveSequence.Append(transform.DOLocalMove(pos, speed).OnComplete(()=>endStep(i, pos)));
+		moveSequence.Append(transform.DOLocalMove(pos, speed)
+			.OnStart(()=>startStep(i, pos))
+			.OnComplete(()=>endStep(i, pos))
+		);
 		moveSequence.Join(transform.DOLookAt(pos, speed / 2, AxisConstraint.Y));
+	}
+
+	private void startStep (int i, Vector3 pos) {
+		Vector3 nextPos = path[i];
+		Tile tile = world.dungeon.getTileAtPos(new Vector3(nextPos.x, 0, nextPos.y));
+		print (tile.id);
+		if (tile.id == TileType.DOOR) {
+			print ("DOOR");
+			moveSequence.Pause();
+			//world.openDoor(tile);
+		}
+
+
+		jump();
 	}
 
 
 	private void endStep (int i, Vector3 pos) {
 		// jump
-		if (i < path.Count - 1) jump();
+		/*if (i < path.Count - 1)  {
+			jump();
+		}*/
+		
 
 		// check for last step
 		if (i == path.Count - 2) animLastStep();

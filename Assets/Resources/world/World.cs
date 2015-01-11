@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class World : MonoBehaviour {
 
@@ -96,6 +97,14 @@ public class World : MonoBehaviour {
 		//cam.interpolateTo (Vector3.zero, new Vector3(Random.Range(10, 90), Random.Range(0, 360), 0), Random.Range(10, 80));
 	}
 
+
+	// *****************************************************
+	// Dungeon actions
+	// *****************************************************
+
+	/*public void openDoor (Tile tile) {
+		tile.obj.transform.DOMoveX(tile.obj.transform.position.x + 1, 1); //.OnComplete(MyCallback);
+	}*/
 
 	// *****************************************************
 	// Gestures
